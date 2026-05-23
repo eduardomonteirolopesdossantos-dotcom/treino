@@ -113,72 +113,75 @@ const Cartografias = (() => {
   ];
 
   // Vestibular classification per subject+year section
-  // FUVEST: A = Nas duas fases · B = Apenas 2ª fase · C = Apenas 1ª fase · null = não cobre
-  // VUNESP: D = Frequente · E = Muito frequente · null = não cobre
+  // FUVEST: A = Nas duas fases · B = Apenas 2ª fase · C = Apenas 1ª fase
+  // VUNESP: D = Frequente · E = Muito frequente
+  // FGV:    F = Frequente · G = Muito frequente
+  // ENEM:   H = Frequente · I = Muito frequente
+  // null = não cobre / não se aplica
   const RELEVANCE = {
     'Biologia': {
-      '1º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      '2º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      '3º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D' },
+      '1º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'F', ENEM: 'I' },
+      '2º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'F', ENEM: 'I' },
+      '3º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'F', ENEM: 'I' },
+      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D', FGV: null, ENEM: 'H' },
     },
     'Física': {
-      '1º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      '2º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      '3º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D' },
+      '1º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      '2º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      '3º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D', FGV: 'F', ENEM: 'H' },
     },
     'Química': {
-      '1º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      '2º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      '3º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D' },
+      '1º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'F', ENEM: 'I' },
+      '2º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'F', ENEM: 'I' },
+      '3º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D', FGV: null, ENEM: 'H' },
     },
     'Matemática': {
-      '1º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      '2º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      '3º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D' },
+      '1º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      '2º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      '3º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D', FGV: 'G', ENEM: 'H' },
     },
     'História do Brasil': {
-      '1º Ano':                   { FUVEST: 'C', VUNESP: 'D' },
-      '2º Ano':                   { FUVEST: 'A', VUNESP: 'E' },
-      '3º Ano':                   { FUVEST: 'A', VUNESP: 'E' },
-      'Temas Interdisciplinares': { FUVEST: 'B', VUNESP: 'D' },
+      '1º Ano':                   { FUVEST: 'C', VUNESP: 'D', FGV: 'F', ENEM: 'I' },
+      '2º Ano':                   { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      '3º Ano':                   { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      'Temas Interdisciplinares': { FUVEST: 'B', VUNESP: 'D', FGV: 'F', ENEM: 'I' },
     },
     'História Geral': {
-      '1º Ano':          { FUVEST: 'C', VUNESP: 'D' },
-      '2º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      '3º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D' },
+      '1º Ano':          { FUVEST: 'C', VUNESP: 'D', FGV: 'F', ENEM: 'I' },
+      '2º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      '3º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D', FGV: 'F', ENEM: 'H' },
     },
     'Geografia': {
-      '1º Ano':          { FUVEST: 'C', VUNESP: 'D' },
-      '2º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      '3º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D' },
+      '1º Ano':          { FUVEST: 'C', VUNESP: 'D', FGV: 'F', ENEM: 'I' },
+      '2º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'F', ENEM: 'I' },
+      '3º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'F', ENEM: 'I' },
+      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D', FGV: null, ENEM: 'H' },
     },
     'Filosofia': {
-      '2º Ano':          { FUVEST: 'A', VUNESP: null },
-      '3º Ano':          { FUVEST: 'A', VUNESP: null },
-      'Aprofundamento':  { FUVEST: 'B', VUNESP: null },
+      '2º Ano':          { FUVEST: 'A', VUNESP: null, FGV: 'G', ENEM: 'I' },
+      '3º Ano':          { FUVEST: 'A', VUNESP: null, FGV: 'G', ENEM: 'I' },
+      'Aprofundamento':  { FUVEST: 'B', VUNESP: null, FGV: 'F', ENEM: 'H' },
     },
     'Português: Literatura': {
-      '1º Ano':          { FUVEST: 'C', VUNESP: 'D' },
-      '2º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      '3º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'E' },
+      '1º Ano':          { FUVEST: 'C', VUNESP: 'D', FGV: 'F', ENEM: 'H' },
+      '2º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      '3º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'E', FGV: 'G', ENEM: 'H' },
     },
     'Português: Língua e Produção': {
-      '1º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      '2º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      '3º Ano':          { FUVEST: 'A', VUNESP: 'E' },
-      'Aprofundamento':  { FUVEST: 'A', VUNESP: 'E' },
+      '1º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      '2º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      '3º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      'Aprofundamento':  { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
     },
     'Inglês': {
-      'Leitura e Compreensão':   { FUVEST: 'C', VUNESP: 'E' },
-      'Texto Multimodal':        { FUVEST: 'C', VUNESP: 'D' },
-      'Vocabulário e Gramática': { FUVEST: 'C', VUNESP: 'E' },
+      'Leitura e Compreensão':   { FUVEST: 'C', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      'Texto Multimodal':        { FUVEST: 'C', VUNESP: 'D', FGV: 'F', ENEM: 'I' },
+      'Vocabulário e Gramática': { FUVEST: 'C', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
     },
   };
 

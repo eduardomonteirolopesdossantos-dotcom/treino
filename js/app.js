@@ -1,7 +1,7 @@
 const App = (() => {
   let editingId = null;
   let _cartoSubj = '';
-  let _cartoFilters = { year: '', fuvest: '', vunesp: '', status: '' };
+  let _cartoFilters = { year: '', fuvest: '', vunesp: '', fgv: '', enem: '', status: '' };
 
   /* ── Boot ── */
   function init() {
@@ -200,7 +200,7 @@ const App = (() => {
     const d = data[subj]; if (!d) return;
 
     _cartoSubj = subj;
-    _cartoFilters = { year: '', fuvest: '', vunesp: '', status: '' };
+    _cartoFilters = { year: '', fuvest: '', vunesp: '', fgv: '', enem: '', status: '' };
 
     const anos = Object.keys(d.anos);
 
@@ -219,6 +219,18 @@ const App = (() => {
       { val: 'D', label: 'D — Frequente' },
       { val: 'E', label: 'E — Muito frequente' },
     ].map(s => `<button class="filter-btn ${s.val===''?'active':''} ${s.val?'vunesp-btn':''}" data-type="vunesp" data-val="${s.val}" onclick="App.setCartoFilter('vunesp','${s.val}')">${escHtml(s.label)}</button>`).join('');
+
+    const fgvBtns = [
+      { val: '',  label: 'Todas' },
+      { val: 'F', label: 'F — Frequente' },
+      { val: 'G', label: 'G — Muito frequente' },
+    ].map(s => `<button class="filter-btn ${s.val===''?'active':''} ${s.val?'fgv-btn':''}" data-type="fgv" data-val="${s.val}" onclick="App.setCartoFilter('fgv','${s.val}')">${escHtml(s.label)}</button>`).join('');
+
+    const enemBtns = [
+      { val: '',  label: 'Todas' },
+      { val: 'H', label: 'H — Frequente' },
+      { val: 'I', label: 'I — Muito frequente' },
+    ].map(s => `<button class="filter-btn ${s.val===''?'active':''} ${s.val?'enem-btn':''}" data-type="enem" data-val="${s.val}" onclick="App.setCartoFilter('enem','${s.val}')">${escHtml(s.label)}</button>`).join('');
 
     const statusBtns = [
       { val: '',         label: 'Todos'        },
@@ -248,6 +260,14 @@ const App = (() => {
           <div class="filter-btns">${vnspBtns}</div>
         </div>
         <div class="filter-group">
+          <span class="filter-label" style="color:#F97316">FGV</span>
+          <div class="filter-btns">${fgvBtns}</div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label" style="color:#059669">ENEM</span>
+          <div class="filter-btns">${enemBtns}</div>
+        </div>
+        <div class="filter-group">
           <span class="filter-label">Revisão</span>
           <div class="filter-btns">${statusBtns}</div>
         </div>
@@ -259,7 +279,7 @@ const App = (() => {
 
   function _renderCartoTopics() {
     const subj = _cartoSubj;
-    const { year, fuvest, vunesp, status } = _cartoFilters;
+    const { year, fuvest, vunesp, fgv, enem, status } = _cartoFilters;
     const d = Cartografias.getAll()[subj]; if (!d) return;
     const SC = { pending: '#D1D5DB', studying: '#F59E0B', done: '#10B981' };
     const SL = { pending: '○', studying: '◑', done: '●' };
@@ -271,18 +291,20 @@ const App = (() => {
         // Filter by vestibular letter — hide section if it has no classification or doesn't match
         if (fuvest && rel.FUVEST !== fuvest) return '';
         if (vunesp && rel.VUNESP !== vunesp) return '';
+        if (fgv   && rel.FGV    !== fgv)    return '';
+        if (enem  && rel.ENEM   !== enem)   return '';
 
         const visibleTopics = status
           ? allTopics.filter(t => Cartografias.getStatus(subj, ano, t) === status)
           : allTopics;
         if (!visibleTopics.length) return '';
 
-        // Build badges for active vestibular filters
+        // Build badges for whichever vestibular filters are active
         let badges = '';
-        if (fuvest || vunesp) {
-          if (rel.FUVEST) badges += `<span class="rel-badge rel-fuvest">${rel.FUVEST}</span>`;
-          if (rel.VUNESP) badges += `<span class="rel-badge rel-vunesp">${rel.VUNESP}</span>`;
-        }
+        if (fuvest && rel.FUVEST) badges += `<span class="rel-badge rel-fuvest">${rel.FUVEST}</span>`;
+        if (vunesp && rel.VUNESP) badges += `<span class="rel-badge rel-vunesp">${rel.VUNESP}</span>`;
+        if (fgv    && rel.FGV)    badges += `<span class="rel-badge rel-fgv">${rel.FGV}</span>`;
+        if (enem   && rel.ENEM)   badges += `<span class="rel-badge rel-enem">${rel.ENEM}</span>`;
 
         const doneN = allTopics.filter(t => Cartografias.getStatus(subj, ano, t) === 'done').length;
         const pct   = Math.round(doneN / allTopics.length * 100);

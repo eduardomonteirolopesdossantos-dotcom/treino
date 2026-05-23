@@ -112,76 +112,78 @@ const Cartografias = (() => {
     { nome: 'VUNESP', icon: '🏫', cor: '#EF4444', descricao: 'UNESP, ABC e outras estaduais', formato: 'Múltipla escolha + Dissertativa', datas: 'Jan/Fev', peso: 'Depende da instituição (60–65%)' }
   ];
 
-  // Vestibular relevance per subject+year section
+  // Vestibular classification per subject+year section
+  // FUVEST: A = Nas duas fases · B = Apenas 2ª fase · C = Apenas 1ª fase · null = não cobre
+  // VUNESP: D = Frequente · E = Muito frequente · null = não cobre
   const RELEVANCE = {
     'Biologia': {
-      '1º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'baixa', ENEM:'alta'  },
-      '2º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'baixa', ENEM:'alta'  },
-      '3º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'baixa', ENEM:'alta'  },
-      'Aprofundamento':  { FUVEST:'alta',  VUNESP:'média', FGV:'baixa', ENEM:'baixa' },
+      '1º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      '2º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      '3º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D' },
     },
     'Física': {
-      '1º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'média', ENEM:'alta'  },
-      '2º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'alta',  ENEM:'alta'  },
-      '3º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'alta',  ENEM:'alta'  },
-      'Aprofundamento':  { FUVEST:'alta',  VUNESP:'média', FGV:'baixa', ENEM:'baixa' },
+      '1º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      '2º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      '3º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D' },
     },
     'Química': {
-      '1º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'média', ENEM:'alta'  },
-      '2º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'média', ENEM:'alta'  },
-      '3º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'média', ENEM:'alta'  },
-      'Aprofundamento':  { FUVEST:'alta',  VUNESP:'média', FGV:'baixa', ENEM:'baixa' },
+      '1º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      '2º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      '3º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D' },
     },
     'Matemática': {
-      '1º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'alta',  ENEM:'alta'  },
-      '2º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'alta',  ENEM:'alta'  },
-      '3º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'alta',  ENEM:'alta'  },
-      'Aprofundamento':  { FUVEST:'alta',  VUNESP:'média', FGV:'média', ENEM:'baixa' },
+      '1º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      '2º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      '3º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D' },
     },
     'História do Brasil': {
-      '1º Ano':                   { FUVEST:'alta',  VUNESP:'média', FGV:'média', ENEM:'alta'  },
-      '2º Ano':                   { FUVEST:'alta',  VUNESP:'alta',  FGV:'alta',  ENEM:'alta'  },
-      '3º Ano':                   { FUVEST:'alta',  VUNESP:'alta',  FGV:'alta',  ENEM:'alta'  },
-      'Temas Interdisciplinares': { FUVEST:'média', VUNESP:'baixa', FGV:'baixa', ENEM:'alta'  },
+      '1º Ano':                   { FUVEST: 'C', VUNESP: 'D' },
+      '2º Ano':                   { FUVEST: 'A', VUNESP: 'E' },
+      '3º Ano':                   { FUVEST: 'A', VUNESP: 'E' },
+      'Temas Interdisciplinares': { FUVEST: 'B', VUNESP: 'D' },
     },
     'História Geral': {
-      '1º Ano':          { FUVEST:'alta',  VUNESP:'média', FGV:'média', ENEM:'alta'  },
-      '2º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'alta',  ENEM:'alta'  },
-      '3º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'alta',  ENEM:'alta'  },
-      'Aprofundamento':  { FUVEST:'alta',  VUNESP:'média', FGV:'média', ENEM:'média' },
+      '1º Ano':          { FUVEST: 'C', VUNESP: 'D' },
+      '2º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      '3º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D' },
     },
     'Geografia': {
-      '1º Ano':          { FUVEST:'alta',  VUNESP:'média', FGV:'baixa', ENEM:'alta'  },
-      '2º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'baixa', ENEM:'alta'  },
-      '3º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'baixa', ENEM:'alta'  },
-      'Aprofundamento':  { FUVEST:'média', VUNESP:'baixa', FGV:'baixa', ENEM:'média' },
+      '1º Ano':          { FUVEST: 'C', VUNESP: 'D' },
+      '2º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      '3º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D' },
     },
     'Filosofia': {
-      '2º Ano':          { FUVEST:'alta',  VUNESP:'baixa', FGV:'baixa', ENEM:'alta'  },
-      '3º Ano':          { FUVEST:'alta',  VUNESP:'baixa', FGV:'baixa', ENEM:'alta'  },
-      'Aprofundamento':  { FUVEST:'média', VUNESP:'baixa', FGV:'baixa', ENEM:'média' },
+      '2º Ano':          { FUVEST: 'A', VUNESP: null },
+      '3º Ano':          { FUVEST: 'A', VUNESP: null },
+      'Aprofundamento':  { FUVEST: 'B', VUNESP: null },
     },
     'Português: Literatura': {
-      '1º Ano':          { FUVEST:'alta',  VUNESP:'média', FGV:'média', ENEM:'média' },
-      '2º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'alta',  ENEM:'alta'  },
-      '3º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'alta',  ENEM:'alta'  },
-      'Aprofundamento':  { FUVEST:'alta',  VUNESP:'alta',  FGV:'média', ENEM:'baixa' },
+      '1º Ano':          { FUVEST: 'C', VUNESP: 'D' },
+      '2º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      '3º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'E' },
     },
     'Português: Língua e Produção': {
-      '1º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'alta',  ENEM:'alta' },
-      '2º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'alta',  ENEM:'alta' },
-      '3º Ano':          { FUVEST:'alta',  VUNESP:'alta',  FGV:'alta',  ENEM:'alta' },
-      'Aprofundamento':  { FUVEST:'alta',  VUNESP:'alta',  FGV:'alta',  ENEM:'alta' },
+      '1º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      '2º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      '3º Ano':          { FUVEST: 'A', VUNESP: 'E' },
+      'Aprofundamento':  { FUVEST: 'A', VUNESP: 'E' },
     },
     'Inglês': {
-      'Leitura e Compreensão':   { FUVEST:'alta',  VUNESP:'alta',  FGV:'alta',  ENEM:'alta'  },
-      'Texto Multimodal':        { FUVEST:'média', VUNESP:'média', FGV:'média', ENEM:'alta'  },
-      'Vocabulário e Gramática': { FUVEST:'alta',  VUNESP:'alta',  FGV:'alta',  ENEM:'alta'  },
+      'Leitura e Compreensão':   { FUVEST: 'C', VUNESP: 'E' },
+      'Texto Multimodal':        { FUVEST: 'C', VUNESP: 'D' },
+      'Vocabulário e Gramática': { FUVEST: 'C', VUNESP: 'E' },
     },
   };
 
-  function getRelevance(disc, ano, vest) {
-    return RELEVANCE[disc]?.[ano]?.[vest] || 'média';
+  function getRelevance(disc, ano) {
+    return RELEVANCE[disc]?.[ano] || {};
   }
 
   // Topic progress tracking

@@ -374,12 +374,11 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
 .filter-btn { padding: 4px 11px; border: 1px solid var(--border); border-radius: 20px; font-size: 12px; cursor: pointer; background: #fff; color: var(--text-light); font-family: inherit; transition: all .15s; line-height: 1.5; }
 .filter-btn:hover { border-color: var(--primary); color: var(--primary); }
 .filter-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 600; }
-.rel-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
-.rel-alta  { background: #D1FAE5; color: #065F46; }
-.rel-media { background: #FEF3C7; color: #92400E; }
-.rel-baixa { background: #F3F4F6; color: #9CA3AF; }
-.section-dimmed { opacity: 0.38; transition: opacity .2s; }
-.section-dimmed:hover { opacity: 0.75; }
+.rel-badge  { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle; letter-spacing: .2px; }
+.rel-fuvest { background: #EDE9FE; color: #4F46E5; border: 1px solid #C4B5FD; }
+.rel-vunesp { background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; }
+.fuvest-btn.active { background: #4F46E5; border-color: #4F46E5; }
+.vunesp-btn.active { background: #DC2626; border-color: #DC2626; }
 
 /* ── Responsive ── */
 @media (max-width: 1100px) {

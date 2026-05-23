@@ -1,7 +1,7 @@
 const App = (() => {
   let editingId = null;
   let _cartoSubj = '';
-  let _cartoFilters = { year: '', vest: '', status: '' };
+  let _cartoFilters = { year: '', fuvest: '', vunesp: '', status: '' };
 
   /* ── Boot ── */
   function init() {
@@ -200,22 +200,31 @@ const App = (() => {
     const d = data[subj]; if (!d) return;
 
     _cartoSubj = subj;
-    _cartoFilters = { year: '', vest: '', status: '' };
+    _cartoFilters = { year: '', fuvest: '', vunesp: '', status: '' };
 
     const anos = Object.keys(d.anos);
-    const vestibulares = ['FUVEST', 'VUNESP', 'FGV', 'ENEM'];
 
     const yearBtns = `<button class="filter-btn active" data-type="year" data-val="" onclick="App.setCartoFilter('year','')">Todos</button>`
       + anos.map(a => `<button class="filter-btn" data-type="year" data-val="${escHtml(a)}" onclick="App.setCartoFilter('year','${escHtml(a).replace(/'/g,"&#39;")}')">${escHtml(a)}</button>`).join('');
 
-    const vestBtns = `<button class="filter-btn active" data-type="vest" data-val="" onclick="App.setCartoFilter('vest','')">Todos</button>`
-      + vestibulares.map(v => `<button class="filter-btn" data-type="vest" data-val="${v}" onclick="App.setCartoFilter('vest','${v}')">${v}</button>`).join('');
+    const fuvestBtns = [
+      { val: '',  label: 'Todas' },
+      { val: 'A', label: 'A — Nas duas fases' },
+      { val: 'B', label: 'B — Apenas 2ª fase' },
+      { val: 'C', label: 'C — Apenas 1ª fase' },
+    ].map(s => `<button class="filter-btn ${s.val===''?'active':''} ${s.val?'fuvest-btn':''}" data-type="fuvest" data-val="${s.val}" onclick="App.setCartoFilter('fuvest','${s.val}')">${escHtml(s.label)}</button>`).join('');
+
+    const vnspBtns = [
+      { val: '',  label: 'Todas' },
+      { val: 'D', label: 'D — Frequente' },
+      { val: 'E', label: 'E — Muito frequente' },
+    ].map(s => `<button class="filter-btn ${s.val===''?'active':''} ${s.val?'vunesp-btn':''}" data-type="vunesp" data-val="${s.val}" onclick="App.setCartoFilter('vunesp','${s.val}')">${escHtml(s.label)}</button>`).join('');
 
     const statusBtns = [
-      { val: '',         label: 'Todos'       },
-      { val: 'pending',  label: '○ Pendente'  },
-      { val: 'studying', label: '◑ Em revisão'},
-      { val: 'done',     label: '● Estudado'  },
+      { val: '',         label: 'Todos'        },
+      { val: 'pending',  label: '○ Pendente'   },
+      { val: 'studying', label: '◑ Em revisão' },
+      { val: 'done',     label: '● Estudado'   },
     ].map(s => `<button class="filter-btn ${s.val===''?'active':''}" data-type="status" data-val="${s.val}" onclick="App.setCartoFilter('status','${s.val}')">${escHtml(s.label)}</button>`).join('');
 
     openModal(`${d.icon} ${escHtml(subj)}`, `
@@ -231,8 +240,12 @@ const App = (() => {
           <div class="filter-btns">${yearBtns}</div>
         </div>
         <div class="filter-group">
-          <span class="filter-label">Vestibular</span>
-          <div class="filter-btns">${vestBtns}</div>
+          <span class="filter-label" style="color:#4F46E5">FUVEST</span>
+          <div class="filter-btns">${fuvestBtns}</div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label" style="color:#DC2626">VUNESP</span>
+          <div class="filter-btns">${vnspBtns}</div>
         </div>
         <div class="filter-group">
           <span class="filter-label">Revisão</span>
@@ -246,24 +259,30 @@ const App = (() => {
 
   function _renderCartoTopics() {
     const subj = _cartoSubj;
-    const { year, vest, status } = _cartoFilters;
+    const { year, fuvest, vunesp, status } = _cartoFilters;
     const d = Cartografias.getAll()[subj]; if (!d) return;
     const SC = { pending: '#D1D5DB', studying: '#F59E0B', done: '#10B981' };
     const SL = { pending: '○', studying: '◑', done: '●' };
-    const relCls = { alta: 'rel-alta', média: 'rel-media', baixa: 'rel-baixa' };
-    const relLbl = { alta: '● Alta', média: '◑ Média', baixa: '○ Baixa' };
 
     const html = Object.entries(d.anos)
       .filter(([ano]) => !year || ano === year)
       .map(([ano, allTopics]) => {
+        const rel = Cartografias.getRelevance(subj, ano);
+        // Filter by vestibular letter — hide section if it has no classification or doesn't match
+        if (fuvest && rel.FUVEST !== fuvest) return '';
+        if (vunesp && rel.VUNESP !== vunesp) return '';
+
         const visibleTopics = status
           ? allTopics.filter(t => Cartografias.getStatus(subj, ano, t) === status)
           : allTopics;
         if (!visibleTopics.length) return '';
 
-        const rel    = vest ? Cartografias.getRelevance(subj, ano, vest) : null;
-        const badge  = rel ? `<span class="rel-badge ${relCls[rel]}">${relLbl[rel]}</span>` : '';
-        const dimCls = rel === 'baixa' ? 'section-dimmed' : '';
+        // Build badges for active vestibular filters
+        let badges = '';
+        if (fuvest || vunesp) {
+          if (rel.FUVEST) badges += `<span class="rel-badge rel-fuvest">${rel.FUVEST}</span>`;
+          if (rel.VUNESP) badges += `<span class="rel-badge rel-vunesp">${rel.VUNESP}</span>`;
+        }
 
         const doneN = allTopics.filter(t => Cartografias.getStatus(subj, ano, t) === 'done').length;
         const pct   = Math.round(doneN / allTopics.length * 100);
@@ -280,9 +299,9 @@ const App = (() => {
           </div>`;
         }).join('');
 
-        return `<div class="carto-section ${dimCls}" style="margin-bottom:18px" data-ano="${escHtml(ano)}">
+        return `<div class="carto-section" style="margin-bottom:18px" data-ano="${escHtml(ano)}">
           <div class="carto-section-header">
-            <span style="font-size:13px;font-weight:600;color:${d.color}">${escHtml(ano)}${badge}</span>
+            <span style="font-size:13px;font-weight:600;color:${d.color}">${escHtml(ano)}${badges}</span>
             <span style="font-size:12px;color:var(--text-muted)">${doneN}/${allTopics.length} · ${pct}%</span>
           </div>
           <div class="progress-bar" style="margin-bottom:8px">
@@ -323,7 +342,7 @@ const App = (() => {
       if (header) header.textContent = `${doneN}/${allTopics.length} · ${pct}%`;
       if (bar)    bar.style.width = pct + '%';
 
-      // If status filter is active and topic no longer matches, hide it
+      // If status filter is active and topic no longer matches the filter, hide it
       if (_cartoFilters.status && _cartoFilters.status !== newStatus) {
         el.style.display = 'none';
         const visible = [...section.querySelectorAll('.topic-item')].filter(i => i.style.display !== 'none');

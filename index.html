@@ -1,2 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BIA — Vestibular 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
 
-Bem vindos!!
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">🎓</div>
+        <div class="logo-text">
+          <span class="logo-name">BIA</span>
+          <span class="logo-sub">Vestibular 2026</span>
+        </div>
+      </div>
+    </div>
+    <nav class="nav">
+      <a href="#" class="nav-item active" data-page="dashboard">
+        <span class="nav-icon">📊</span><span class="nav-label">Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" data-page="cartografias">
+        <span class="nav-icon">🗂️</span><span class="nav-label">Cartografias</span>
+      </a>
+      <a href="#" class="nav-item" data-page="simulados">
+        <span class="nav-icon">📝</span><span class="nav-label">Simulados</span>
+      </a>
+      <a href="#" class="nav-item" data-page="novo-simulado">
+        <span class="nav-icon">➕</span><span class="nav-label">Novo Simulado</span>
+      </a>
+      <a href="#" class="nav-item" data-page="recomendacoes">
+        <span class="nav-icon">💡</span><span class="nav-label">Recomendações</span>
+      </a>
+      <a href="#" class="nav-item" data-page="cronograma">
+        <span class="nav-icon">📅</span><span class="nav-label">Cronograma</span>
+      </a>
+      <a href="#" class="nav-item" data-page="vestibulares">
+        <span class="nav-icon">🏆</span><span class="nav-label">Vestibulares</span>
+      </a>
+      <a href="#" class="nav-item" data-page="metas">
+        <span class="nav-icon">🎯</span><span class="nav-label">Metas</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="version">Escola Mobile · 3º EM · 2026</span>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main" id="main">
+    <header class="mobile-header">
+      <button class="hamburger" id="hamburger">☰</button>
+      <h1 class="mobile-title">BIA — Vestibular 2026</h1>
+    </header>
+
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <p class="page-subtitle">Visão geral do desempenho de Bia</p>
+      </div>
+      <div id="dashboard-content"></div>
+    </div>
+
+    <!-- Cartografias -->
+    <div id="page-cartografias" class="page">
+      <div class="page-header">
+        <h1>Cartografias de Revisão</h1>
+        <p class="page-subtitle">Tópicos por disciplina · Escola Mobile 3º ano EM</p>
+      </div>
+      <div id="cartografias-content"></div>
+    </div>
+
+    <!-- Simulados -->
+    <div id="page-simulados" class="page">
+      <div class="page-header">
+        <h1>Simulados</h1>
+        <p class="page-subtitle">Histórico de simulados e provas</p>
+        <button class="btn btn-primary" onclick="App.navigate('novo-simulado')">+ Novo Simulado</button>
+      </div>
+      <div id="simulados-content"></div>
+    </div>
+
+    <!-- Novo / Editar Simulado -->
+    <div id="page-novo-simulado" class="page">
+      <div class="page-header">
+        <h1 id="form-page-title">Novo Simulado</h1>
+        <p class="page-subtitle">Registrar resultados e análise de erros</p>
+      </div>
+      <div id="form-content"></div>
+    </div>
+
+    <!-- Recomendações -->
+    <div id="page-recomendacoes" class="page">
+      <div class="page-header">
+        <h1>Recomendações</h1>
+        <p class="page-subtitle">Prioridades de estudo baseadas no seu desempenho</p>
+      </div>
+      <div id="recomendacoes-content"></div>
+    </div>
+
+    <!-- Cronograma -->
+    <div id="page-cronograma" class="page">
+      <div class="page-header">
+        <h1>Cronograma</h1>
+        <p class="page-subtitle">Próximos simulados, provas e datas importantes</p>
+      </div>
+      <div id="cronograma-content"></div>
+    </div>
+
+    <!-- Vestibulares -->
+    <div id="page-vestibulares" class="page">
+      <div class="page-header">
+        <h1>Vestibulares</h1>
+        <p class="page-subtitle">Comparativo das instituições e formatos de prova</p>
+      </div>
+      <div id="vestibulares-content"></div>
+    </div>
+
+    <!-- Metas -->
+    <div id="page-metas" class="page">
+      <div class="page-header">
+        <h1>Metas</h1>
+        <p class="page-subtitle">Defina a nota mínima desejada por disciplina</p>
+      </div>
+      <div id="metas-content"></div>
+    </div>
+  </main>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <h2 id="modal-title"></h2>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/cartografias.js"></script>
+  <script src="js/recommendations.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

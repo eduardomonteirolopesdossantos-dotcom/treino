@@ -1,5 +1,7 @@
 const App = (() => {
   let editingId = null;
+  let _cartoSubj = '';
+  let _cartoFilters = { year: '', vest: '', status: '' };
 
   /* ── Boot ── */
   function init() {
@@ -197,47 +199,109 @@ const App = (() => {
     const data = Cartografias.getAll();
     const d = data[subj]; if (!d) return;
 
-    const sections = Object.entries(d.anos).map(([ano, topics]) => {
-      const done     = topics.filter(t => Cartografias.getStatus(subj, ano, t) === 'done').length;
-      const studying = topics.filter(t => Cartografias.getStatus(subj, ano, t) === 'studying').length;
-      const pct = Math.round(done / topics.length * 100);
+    _cartoSubj = subj;
+    _cartoFilters = { year: '', vest: '', status: '' };
 
-      const topicItems = topics.map(topic => {
-        const status = Cartografias.getStatus(subj, ano, topic);
-        const SC = { pending: '#D1D5DB', studying: '#F59E0B', done: '#10B981' };
-        const SL = { pending: '○', studying: '◑', done: '●' };
-        const safeSubj  = escHtml(subj).replace(/'/g, '&#39;');
-        const safeAno   = escHtml(ano).replace(/'/g, '&#39;');
-        const safeTopic = escHtml(topic).replace(/'/g, '&#39;');
-        return `
-          <div class="topic-item" style="border-left-color:${SC[status]}"
-               onclick="App.toggleTopic(this,'${safeSubj}','${safeAno}','${safeTopic}')">
-            <span class="topic-status" style="color:${SC[status]}">${SL[status]}</span>
-            <span class="topic-name">${escHtml(topic)}</span>
-          </div>`;
-      }).join('');
+    const anos = Object.keys(d.anos);
+    const vestibulares = ['FUVEST', 'VUNESP', 'FGV', 'ENEM'];
 
-      return `
-        <div class="carto-section" style="margin-bottom:18px">
-          <div class="carto-section-header">
-            <span style="font-size:13px;font-weight:600;color:${d.color}">${escHtml(ano)}</span>
-            <span style="font-size:12px;color:var(--text-muted)">${done}/${topics.length} · ${pct}%</span>
-          </div>
-          <div class="progress-bar" style="margin-bottom:8px">
-            <div class="progress-fill" style="width:${pct}%;background:${d.color}"></div>
-          </div>
-          <div class="topic-list">${topicItems}</div>
-        </div>`;
-    }).join('');
+    const yearBtns = `<button class="filter-btn active" data-type="year" data-val="" onclick="App.setCartoFilter('year','')">Todos</button>`
+      + anos.map(a => `<button class="filter-btn" data-type="year" data-val="${escHtml(a)}" onclick="App.setCartoFilter('year','${escHtml(a).replace(/'/g,"&#39;")}')">${escHtml(a)}</button>`).join('');
+
+    const vestBtns = `<button class="filter-btn active" data-type="vest" data-val="" onclick="App.setCartoFilter('vest','')">Todos</button>`
+      + vestibulares.map(v => `<button class="filter-btn" data-type="vest" data-val="${v}" onclick="App.setCartoFilter('vest','${v}')">${v}</button>`).join('');
+
+    const statusBtns = [
+      { val: '',         label: 'Todos'       },
+      { val: 'pending',  label: '○ Pendente'  },
+      { val: 'studying', label: '◑ Em revisão'},
+      { val: 'done',     label: '● Estudado'  },
+    ].map(s => `<button class="filter-btn ${s.val===''?'active':''}" data-type="status" data-val="${s.val}" onclick="App.setCartoFilter('status','${s.val}')">${escHtml(s.label)}</button>`).join('');
 
     openModal(`${d.icon} ${escHtml(subj)}`, `
-      <div class="carto-legend" style="padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:16px">
+      <div class="carto-legend" style="padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:14px">
         <span><span style="color:#9CA3AF">○</span> Pendente</span>
         <span><span style="color:#F59E0B">◑</span> Em revisão</span>
         <span><span style="color:#10B981">●</span> Estudado</span>
         <span style="color:var(--text-muted)">· Clique para alternar</span>
       </div>
-      ${sections}`);
+      <div class="carto-filters" id="carto-filter-bar">
+        <div class="filter-group">
+          <span class="filter-label">Ano</span>
+          <div class="filter-btns">${yearBtns}</div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Vestibular</span>
+          <div class="filter-btns">${vestBtns}</div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Revisão</span>
+          <div class="filter-btns">${statusBtns}</div>
+        </div>
+      </div>
+      <div id="carto-topics"></div>`);
+
+    _renderCartoTopics();
+  }
+
+  function _renderCartoTopics() {
+    const subj = _cartoSubj;
+    const { year, vest, status } = _cartoFilters;
+    const d = Cartografias.getAll()[subj]; if (!d) return;
+    const SC = { pending: '#D1D5DB', studying: '#F59E0B', done: '#10B981' };
+    const SL = { pending: '○', studying: '◑', done: '●' };
+    const relCls = { alta: 'rel-alta', média: 'rel-media', baixa: 'rel-baixa' };
+    const relLbl = { alta: '● Alta', média: '◑ Média', baixa: '○ Baixa' };
+
+    const html = Object.entries(d.anos)
+      .filter(([ano]) => !year || ano === year)
+      .map(([ano, allTopics]) => {
+        const visibleTopics = status
+          ? allTopics.filter(t => Cartografias.getStatus(subj, ano, t) === status)
+          : allTopics;
+        if (!visibleTopics.length) return '';
+
+        const rel    = vest ? Cartografias.getRelevance(subj, ano, vest) : null;
+        const badge  = rel ? `<span class="rel-badge ${relCls[rel]}">${relLbl[rel]}</span>` : '';
+        const dimCls = rel === 'baixa' ? 'section-dimmed' : '';
+
+        const doneN = allTopics.filter(t => Cartografias.getStatus(subj, ano, t) === 'done').length;
+        const pct   = Math.round(doneN / allTopics.length * 100);
+
+        const items = visibleTopics.map(topic => {
+          const st = Cartografias.getStatus(subj, ano, topic);
+          const safeSubj  = escHtml(subj).replace(/'/g, '&#39;');
+          const safeAno   = escHtml(ano).replace(/'/g, '&#39;');
+          const safeTopic = escHtml(topic).replace(/'/g, '&#39;');
+          return `<div class="topic-item" style="border-left-color:${SC[st]}"
+               onclick="App.toggleTopic(this,'${safeSubj}','${safeAno}','${safeTopic}')">
+            <span class="topic-status" style="color:${SC[st]}">${SL[st]}</span>
+            <span class="topic-name">${escHtml(topic)}</span>
+          </div>`;
+        }).join('');
+
+        return `<div class="carto-section ${dimCls}" style="margin-bottom:18px" data-ano="${escHtml(ano)}">
+          <div class="carto-section-header">
+            <span style="font-size:13px;font-weight:600;color:${d.color}">${escHtml(ano)}${badge}</span>
+            <span style="font-size:12px;color:var(--text-muted)">${doneN}/${allTopics.length} · ${pct}%</span>
+          </div>
+          <div class="progress-bar" style="margin-bottom:8px">
+            <div class="progress-fill" style="width:${pct}%;background:${d.color}"></div>
+          </div>
+          <div class="topic-list">${items}</div>
+        </div>`;
+      }).join('');
+
+    const container = document.getElementById('carto-topics');
+    if (container) container.innerHTML = html || '<p style="color:var(--text-muted);font-size:14px;text-align:center;padding:24px">Nenhum tópico para este filtro.</p>';
+  }
+
+  function setCartoFilter(type, val) {
+    _cartoFilters[type] = val;
+    document.querySelectorAll(`#carto-filter-bar .filter-btn[data-type="${type}"]`).forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.val === val);
+    });
+    _renderCartoTopics();
   }
 
   function toggleTopic(el, subj, ano, topic) {
@@ -246,17 +310,25 @@ const App = (() => {
     const newStatus = Cartografias.toggleStatus(subj, ano, topic);
     el.style.borderLeftColor = SC[newStatus];
     el.querySelector('.topic-status').style.color = SC[newStatus];
-    el.querySelector('.topic-status').textContent  = SL[newStatus];
-    // Update section progress label
+    el.querySelector('.topic-status').textContent = SL[newStatus];
+
+    // Update section progress from data (not DOM) to handle filtered views
     const section = el.closest('.carto-section');
     if (section) {
-      const items   = section.querySelectorAll('.topic-item');
-      const doneN   = [...items].filter(i => i.querySelector('.topic-status').textContent === '●').length;
-      const pct     = Math.round(doneN / items.length * 100);
-      const header  = section.querySelector('.carto-section-header span:last-child');
-      const bar     = section.querySelector('.progress-fill');
-      if (header) header.textContent = `${doneN}/${items.length} · ${pct}%`;
+      const allTopics = Cartografias.getAll()[subj]?.anos[ano] || [];
+      const doneN = allTopics.filter(t => Cartografias.getStatus(subj, ano, t) === 'done').length;
+      const pct   = Math.round(doneN / allTopics.length * 100);
+      const header = section.querySelector('.carto-section-header span:last-child');
+      const bar    = section.querySelector('.progress-fill');
+      if (header) header.textContent = `${doneN}/${allTopics.length} · ${pct}%`;
       if (bar)    bar.style.width = pct + '%';
+
+      // If status filter is active and topic no longer matches, hide it
+      if (_cartoFilters.status && _cartoFilters.status !== newStatus) {
+        el.style.display = 'none';
+        const visible = [...section.querySelectorAll('.topic-item')].filter(i => i.style.display !== 'none');
+        if (!visible.length) section.style.display = 'none';
+      }
     }
   }
 
@@ -757,7 +829,7 @@ const App = (() => {
     viewSimulado, editSimulado, deleteSimulado,
     deleteEvent, showAddEventModal,
     openModal, closeModal, saveGoals,
-    showCartografiaModal, toggleTopic
+    showCartografiaModal, toggleTopic, setCartoFilter
   };
 })();
 

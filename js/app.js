@@ -412,14 +412,18 @@ const App = (() => {
     editingId = existingId || null;
     document.getElementById('form-page-title').textContent = existingId ? 'Editar Simulado' : 'Novo Simulado';
 
-    const scoreInputs = subjects.map(subj => `
-      <div class="score-item">
-        <div class="score-label">${escHtml(subj)}</div>
-        <div class="score-wrap">
-          <input type="number" class="score-input" name="score_${escHtml(subj)}" min="0" max="100" placeholder="—" value="${existing?.scores[subj] ?? ''}">
-          <span class="score-max">/100</span>
-        </div>
-      </div>`).join('');
+    const scoreRows = subjects.map(subj => {
+      const a = existing?.acertos?.[subj] ?? '';
+      const e = existing?.erradas?.[subj] ?? '';
+      return `
+        <tr data-subj="${escHtml(subj)}">
+          <td class="col-disc">${escHtml(subj)}</td>
+          <td class="col-num"><input type="number" class="sim-input sim-acerto-input" min="0" placeholder="—" value="${a}" oninput="App.updateSimRow(this)"></td>
+          <td class="col-num"><input type="number" class="sim-input sim-erro-input"   min="0" placeholder="—" value="${e}" oninput="App.updateSimRow(this)"></td>
+          <td class="col-num sim-row-total">—</td>
+          <td class="col-pct sim-row-pct">—</td>
+        </tr>`;
+    }).join('');
 
     const erros = existing?.erros || {};
 
@@ -450,9 +454,31 @@ const App = (() => {
           </div>
 
           <div class="form-section">
-            <div class="form-section-title">Notas por Disciplina (0–100)</div>
-            <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Deixe em branco disciplinas não aplicáveis a este simulado.</p>
-            <div class="score-grid">${scoreInputs}</div>
+            <div class="form-section-title">Resultado por Disciplina</div>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Deixe em branco disciplinas não aplicáveis. Total e % são calculados automaticamente.</p>
+            <div class="sim-score-table-wrap">
+              <table class="sim-score-table">
+                <thead>
+                  <tr>
+                    <th class="col-disc">Disciplina</th>
+                    <th class="col-num">Acertos</th>
+                    <th class="col-num">Erros</th>
+                    <th class="col-num">Total</th>
+                    <th class="col-pct">% Acerto</th>
+                  </tr>
+                </thead>
+                <tbody>${scoreRows}</tbody>
+                <tfoot>
+                  <tr>
+                    <td class="col-disc sim-total-label">Total Geral</td>
+                    <td class="col-num" id="sim-total-acertos">—</td>
+                    <td class="col-num" id="sim-total-erros">—</td>
+                    <td class="col-num" id="sim-total-total">—</td>
+                    <td class="col-pct" id="sim-total-pct">—</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
 
           <div class="form-section">
@@ -502,15 +528,32 @@ const App = (() => {
       </div>`;
 
     document.getElementById('sim-form').addEventListener('submit', handleFormSubmit);
+
+    // Initialize row displays for pre-filled values (edit mode)
+    document.querySelectorAll('.sim-score-table tbody tr').forEach(row => {
+      const ai = row.querySelector('.sim-acerto-input');
+      const ei = row.querySelector('.sim-erro-input');
+      if (ai.value !== '' || ei.value !== '') updateSimRow(ai);
+    });
+    _updateSimTotals();
   }
 
   function handleFormSubmit(e) {
     e.preventDefault();
     const fd = new FormData(e.target);
-    const scores = {};
-    Storage.getSubjects().forEach(subj => {
-      const v = fd.get(`score_${subj}`);
-      if (v !== '' && v !== null) scores[subj] = Number(v);
+    const scores = {}, acertos = {}, erradas = {};
+    document.querySelectorAll('.sim-score-table tbody tr').forEach(row => {
+      const subj = row.dataset.subj;
+      const aVal = row.querySelector('.sim-acerto-input').value;
+      const eVal = row.querySelector('.sim-erro-input').value;
+      if (aVal !== '' || eVal !== '') {
+        const a = parseInt(aVal) || 0;
+        const er = parseInt(eVal) || 0;
+        acertos[subj] = a;
+        erradas[subj] = er;
+        const total = a + er;
+        scores[subj] = total > 0 ? Math.round(a / total * 100) : 0;
+      }
     });
     const erros = {
       nao_sabia:    Number(fd.get('err_nao_sabia'))    || 0,
@@ -519,12 +562,72 @@ const App = (() => {
       chute:        Number(fd.get('err_chute'))        || 0,
       duvida:       Number(fd.get('err_duvida'))       || 0,
     };
-    const payload = { name: fd.get('name'), date: fd.get('date'), type: fd.get('type'), scores, erros, notes: fd.get('notes') };
+    const payload = { name: fd.get('name'), date: fd.get('date'), type: fd.get('type'), scores, acertos, erradas, erros, notes: fd.get('notes') };
 
     if (editingId) { Storage.updateSimulado(editingId, payload); toast('Simulado atualizado!', 'success'); }
     else           { Storage.addSimulado(payload);               toast('Simulado registrado!', 'success'); }
     editingId = null;
     navigate('simulados');
+  }
+
+  /* ── Sim score table helpers ── */
+  function updateSimRow(input) {
+    const row  = input.closest('tr');
+    const aEl  = row.querySelector('.sim-acerto-input');
+    const eEl  = row.querySelector('.sim-erro-input');
+    const a    = parseInt(aEl.value) || 0;
+    const er   = parseInt(eEl.value) || 0;
+    const empty = aEl.value === '' && eEl.value === '';
+    const totalEl = row.querySelector('.sim-row-total');
+    const pctEl   = row.querySelector('.sim-row-pct');
+    if (empty) {
+      totalEl.textContent = '—';
+      pctEl.textContent   = '—';
+      pctEl.style.color   = '';
+    } else {
+      const total = a + er;
+      const pct   = total > 0 ? Math.round(a / total * 100) : 0;
+      totalEl.textContent = total;
+      if (total > 0) {
+        pctEl.textContent = `${pct}%`;
+        pctEl.style.color = pct >= 70 ? '#10B981' : pct >= 50 ? '#F59E0B' : '#EF4444';
+      } else {
+        pctEl.textContent = '—';
+        pctEl.style.color = '';
+      }
+    }
+    _updateSimTotals();
+  }
+
+  function _updateSimTotals() {
+    const rows = document.querySelectorAll('.sim-score-table tbody tr');
+    let totalA = 0, totalE = 0, anyFilled = false;
+    rows.forEach(row => {
+      const aVal = row.querySelector('.sim-acerto-input').value;
+      const eVal = row.querySelector('.sim-erro-input').value;
+      if (aVal !== '' || eVal !== '') {
+        anyFilled = true;
+        totalA += parseInt(aVal) || 0;
+        totalE += parseInt(eVal) || 0;
+      }
+    });
+    const totalQ = totalA + totalE;
+    const pct    = totalQ > 0 ? Math.round(totalA / totalQ * 100) : 0;
+    const taEl   = document.getElementById('sim-total-acertos');
+    const teEl   = document.getElementById('sim-total-erros');
+    const ttEl   = document.getElementById('sim-total-total');
+    const tpEl   = document.getElementById('sim-total-pct');
+    if (!taEl) return; // form not in DOM
+    taEl.textContent = anyFilled ? totalA  : '—';
+    teEl.textContent = anyFilled ? totalE  : '—';
+    ttEl.textContent = anyFilled ? totalQ  : '—';
+    if (anyFilled && totalQ > 0) {
+      tpEl.textContent = `${pct}%`;
+      tpEl.style.color = pct >= 70 ? '#10B981' : pct >= 50 ? '#F59E0B' : '#EF4444';
+    } else {
+      tpEl.textContent = '—';
+      tpEl.style.color = '';
+    }
   }
 
   /* ── Recomendações ── */
@@ -1029,7 +1132,8 @@ const App = (() => {
     showCartografiaModal, toggleTopic, setCartoFilter,
     renderGestaoCarto,
     gestaoSelectSubj, gestaoStartEdit, gestaoSaveEdit, gestaoDelete,
-    gestaoShowAdd, gestaoConfirmAdd
+    gestaoShowAdd, gestaoConfirmAdd,
+    updateSimRow
   };
 })();
 

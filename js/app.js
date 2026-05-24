@@ -893,14 +893,18 @@ const App = (() => {
   }
 
   function _gestaoTopicRow(disc, ano, topic) {
+    const rel = Cartografias.getTopicRelevance(disc, ano, topic);
     const sd = escHtml(disc).replace(/'/g,"&#39;");
     const sa = escHtml(ano).replace(/'/g,"&#39;");
     const st = escHtml(topic).replace(/'/g,"&#39;");
+    const badge = (v, cls) => v ? `<span class="gestao-rel-mini rel-${cls}">${v}</span>` : '';
+    const badges = badge(rel.FUVEST,'fuvest') + badge(rel.VUNESP,'vunesp') + badge(rel.FGV,'fgv') + badge(rel.ENEM,'enem');
     return `<div class="gestao-topic-row" data-topic="${escHtml(topic)}">
       <span class="gestao-topic-name">${escHtml(topic)}</span>
+      <div class="gestao-topic-rel">${badges}</div>
       <div class="gestao-topic-btns">
-        <button class="gestao-btn gestao-btn-edit" title="Renomear" onclick="App.gestaoStartEdit(this,'${sd}','${sa}','${st}')">✎</button>
-        <button class="gestao-btn gestao-btn-del"  title="Excluir"  onclick="App.gestaoDelete('${sd}','${sa}','${st}')">✕</button>
+        <button class="gestao-btn gestao-btn-edit" title="Editar" onclick="App.gestaoStartEdit(this,'${sd}','${sa}','${st}')">✎</button>
+        <button class="gestao-btn gestao-btn-del"  title="Excluir" onclick="App.gestaoDelete('${sd}','${sa}','${st}')">✕</button>
       </div>
     </div>`;
   }
@@ -911,32 +915,74 @@ const App = (() => {
   }
 
   function gestaoStartEdit(btn, disc, ano, topic) {
+    const rel = Cartografias.getTopicRelevance(disc, ano, topic);
     const row = btn.closest('.gestao-topic-row');
+    const sd = escHtml(disc).replace(/'/g,"&#39;");
+    const sa = escHtml(ano).replace(/'/g,"&#39;");
+    const st = escHtml(topic).replace(/'/g,"&#39;");
+
+    const sel = (id, pairs, cur) => {
+      const opts = [['','—'], ...pairs].map(([v, lbl]) =>
+        `<option value="${v}" ${(cur ?? '') === v ? 'selected' : ''}>${lbl}</option>`
+      ).join('');
+      return `<select class="gestao-rel-select ${id}">${opts}</select>`;
+    };
+
     row.innerHTML = `
-      <input class="gestao-edit-input" value="${escHtml(topic)}" onkeydown="if(event.key==='Enter')App.gestaoSaveEdit(this,'${disc.replace(/'/g,"&#39;")}','${ano.replace(/'/g,"&#39;")}','${topic.replace(/'/g,"&#39;")}');if(event.key==='Escape')App.renderGestaoCarto()">
-      <div class="gestao-topic-btns">
-        <button class="gestao-btn gestao-btn-save" onclick="App.gestaoSaveEdit(this.closest('.gestao-topic-row').querySelector('input'),'${disc.replace(/'/g,"&#39;")}','${ano.replace(/'/g,"&#39;")}','${topic.replace(/'/g,"&#39;")}')">✓</button>
-        <button class="gestao-btn gestao-btn-cancel" onclick="App.renderGestaoCarto()">✕</button>
+      <div class="gestao-edit-form">
+        <div class="gestao-edit-row1">
+          <input class="gestao-edit-input" value="${escHtml(topic)}"
+            onkeydown="if(event.key==='Enter')App.gestaoSaveEdit(this.closest('.gestao-topic-row'),'${sd}','${sa}','${st}');if(event.key==='Escape')App.renderGestaoCarto()">
+          <button class="gestao-btn gestao-btn-save"
+            onclick="App.gestaoSaveEdit(this.closest('.gestao-topic-row'),'${sd}','${sa}','${st}')">✓ Salvar</button>
+          <button class="gestao-btn gestao-btn-cancel" onclick="App.renderGestaoCarto()">✕</button>
+        </div>
+        <div class="gestao-edit-row2">
+          <span class="gestao-rel-group">
+            <span class="gestao-rel-label-sm" style="color:#4F46E5">FUVEST</span>
+            ${sel('gsel-fuvest',[['A','A — Nas duas fases'],['B','B — Só 2ª fase'],['C','C — Só 1ª fase']], rel.FUVEST)}
+          </span>
+          <span class="gestao-rel-group">
+            <span class="gestao-rel-label-sm" style="color:#DC2626">VUNESP</span>
+            ${sel('gsel-vunesp',[['D','D — Frequente'],['E','E — Muito freq.']], rel.VUNESP)}
+          </span>
+          <span class="gestao-rel-group">
+            <span class="gestao-rel-label-sm" style="color:#EA580C">FGV</span>
+            ${sel('gsel-fgv',[['F','F — Frequente'],['G','G — Muito freq.']], rel.FGV)}
+          </span>
+          <span class="gestao-rel-group">
+            <span class="gestao-rel-label-sm" style="color:#16A34A">ENEM</span>
+            ${sel('gsel-enem',[['H','H — Frequente'],['I','I — Muito freq.']], rel.ENEM)}
+          </span>
+        </div>
       </div>`;
     row.querySelector('input').focus();
     row.querySelector('input').select();
   }
 
-  function gestaoSaveEdit(input, disc, ano, oldTopic) {
-    const newName = input.value.trim();
-    if (!newName) { showToast('Nome não pode estar vazio.', 'error'); return; }
-    if (!Cartografias.renameTopic(disc, ano, oldTopic, newName)) {
-      showToast('Tópico já existe ou nome inválido.', 'error'); return;
+  function gestaoSaveEdit(row, disc, ano, oldTopic) {
+    const newName = row.querySelector('.gestao-edit-input').value.trim();
+    if (!newName) { toast('Nome não pode estar vazio.', 'error'); return; }
+    const rel = {
+      FUVEST: row.querySelector('.gsel-fuvest')?.value || null,
+      VUNESP: row.querySelector('.gsel-vunesp')?.value || null,
+      FGV:    row.querySelector('.gsel-fgv')?.value    || null,
+      ENEM:   row.querySelector('.gsel-enem')?.value   || null,
+    };
+    // Rename if name changed
+    if (newName !== oldTopic && !Cartografias.renameTopic(disc, ano, oldTopic, newName)) {
+      toast('Tópico já existe ou nome inválido.', 'error'); return;
     }
+    Cartografias.setTopicRelevance(disc, ano, newName, rel);
     renderGestaoCarto();
-    showToast('Tópico renomeado.', 'success');
+    toast('Tópico atualizado.', 'success');
   }
 
   function gestaoDelete(disc, ano, topic) {
     if (!confirm(`Excluir "${topic}" de ${disc} — ${ano}?\nO progresso salvo também será removido.`)) return;
     Cartografias.deleteTopic(disc, ano, topic);
     renderGestaoCarto();
-    showToast('Tópico excluído.', 'success');
+    toast('Tópico excluído.', 'success');
   }
 
   function gestaoShowAdd(ano) {
@@ -957,12 +1003,12 @@ const App = (() => {
     const input = document.getElementById(`ginput-${safeAno}`);
     if (!input) return;
     const name = input.value.trim();
-    if (!name) { showToast('Nome não pode estar vazio.', 'error'); return; }
+    if (!name) { toast('Nome não pode estar vazio.', 'error'); return; }
     if (!Cartografias.addTopic(_gestaoSubj, ano, name)) {
-      showToast('Tópico já existe nesta seção.', 'error'); return;
+      toast('Tópico já existe nesta seção.', 'error'); return;
     }
     renderGestaoCarto();
-    showToast(`"${name}" adicionado.`, 'success');
+    toast(`"${name}" adicionado.`, 'success');
   }
 
   /* ── Utilities ── */

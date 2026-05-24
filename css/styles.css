@@ -285,6 +285,21 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
 .gestao-topic-row:hover { background: var(--bg); }
 .gestao-topic-name { flex: 1; font-size: 14px; color: var(--text); }
 
+/* Mini relevance badges on each topic row */
+.gestao-topic-rel { display: flex; gap: 3px; flex-shrink: 0; }
+.gestao-rel-mini {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 5px;
+  font-size: 11px; font-weight: 700; line-height: 1;
+}
+
+/* Inline edit form (name + classification) */
+.gestao-edit-form { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
+.gestao-edit-row1 { display: flex; gap: 6px; align-items: center; }
+.gestao-edit-row2 { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; padding-left: 2px; }
+.gestao-rel-group { display: flex; align-items: center; gap: 5px; }
+.gestao-rel-label-sm { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; white-space: nowrap; }
+
 .gestao-topic-btns { display: flex; gap: 4px; flex-shrink: 0; }
 .gestao-btn {
   width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 6px;
@@ -303,6 +318,17 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
   color: var(--text);
 }
 .gestao-edit-input:focus { box-shadow: 0 0 0 3px rgba(79,70,229,.15); }
+
+.gestao-rel-select {
+  border: 1px solid var(--border); border-radius: 5px; padding: 4px 6px;
+  font-size: 12px; font-family: inherit; background: #fff; cursor: pointer;
+  outline: none; color: var(--text);
+}
+.gestao-rel-select:focus { box-shadow: 0 0 0 3px rgba(79,70,229,.12); }
+.gsel-fuvest { border-color: #C4B5FD; }
+.gsel-vunesp { border-color: #FCA5A5; }
+.gsel-fgv    { border-color: #FDBA74; }
+.gsel-enem   { border-color: #86EFAC; }
 
 .gestao-add-row { padding: 10px 16px; }
 .gestao-btn-add {

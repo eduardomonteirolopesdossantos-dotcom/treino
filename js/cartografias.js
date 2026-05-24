@@ -252,11 +252,41 @@ const Cartografias = (() => {
     },
   };
 
+  // Persisted topic-level overrides (user-editable via Editar Mapa)
+  const RELEVANCE_KEY = 'vestibular_bia_relevance_v1';
+  let _liveRelevance = (() => {
+    try {
+      const s = localStorage.getItem(RELEVANCE_KEY);
+      if (s) return JSON.parse(s);
+    } catch(e) {}
+    return JSON.parse(JSON.stringify(RELEVANCE_TOPICS)); // deep copy of hardcoded default
+  })();
+  function _persistRelevance() { localStorage.setItem(RELEVANCE_KEY, JSON.stringify(_liveRelevance)); }
+
   // Returns topic-level relevance if an override exists, otherwise falls back to section default.
   function getTopicRelevance(disc, ano, topic) {
-    const override = RELEVANCE_TOPICS[disc]?.[ano]?.[topic];
+    const override = _liveRelevance[disc]?.[ano]?.[topic];
     if (override !== undefined) return override;
     return RELEVANCE[disc]?.[ano] || {};
+  }
+
+  function setTopicRelevance(disc, ano, topic, rel) {
+    if (!_liveRelevance[disc])      _liveRelevance[disc] = {};
+    if (!_liveRelevance[disc][ano]) _liveRelevance[disc][ano] = {};
+    _liveRelevance[disc][ano][topic] = rel;
+    _persistRelevance();
+  }
+
+  // Rename also migrates relevance override if one exists
+  function _migrateRelevance(disc, ano, oldName, newName) {
+    const existing = _liveRelevance[disc]?.[ano]?.[oldName];
+    if (existing !== undefined) {
+      if (!_liveRelevance[disc])      _liveRelevance[disc] = {};
+      if (!_liveRelevance[disc][ano]) _liveRelevance[disc][ano] = {};
+      _liveRelevance[disc][ano][newName] = existing;
+      delete _liveRelevance[disc][ano][oldName];
+      _persistRelevance();
+    }
   }
 
   function getRelevance(disc, ano) {
@@ -309,6 +339,7 @@ const Cartografias = (() => {
     if (prog[ok]) { prog[nk] = prog[ok]; delete prog[ok]; }
     _saveProgress(prog);
     _persistData();
+    _migrateRelevance(disc, ano, oldName, newName);
     return true;
   }
 
@@ -347,5 +378,5 @@ const Cartografias = (() => {
   function getAll()          { return _liveData; }
   function getVestibulares() { return VESTIBULARES; }
 
-  return { getAll, getVestibulares, getStatus, setStatus, toggleStatus, getSubjectProgress, getRelevance, getTopicRelevance, addTopic, deleteTopic, renameTopic };
+  return { getAll, getVestibulares, getStatus, setStatus, toggleStatus, getSubjectProgress, getRelevance, getTopicRelevance, setTopicRelevance, addTopic, deleteTopic, renameTopic };
 })();

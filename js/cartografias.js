@@ -263,6 +263,55 @@ const Cartografias = (() => {
     return RELEVANCE[disc]?.[ano] || {};
   }
 
+  // ── Persisted cartografia data (allows adding / editing / deleting topics) ──
+  const DATA_KEY = 'vestibular_bia_carto_data_v1';
+  let _liveData = (() => {
+    try {
+      const s = localStorage.getItem(DATA_KEY);
+      if (s) return JSON.parse(s);
+    } catch(e) {}
+    return JSON.parse(JSON.stringify(DATA)); // deep copy of hardcoded default
+  })();
+  function _persistData() { localStorage.setItem(DATA_KEY, JSON.stringify(_liveData)); }
+
+  function addTopic(disc, ano, name) {
+    name = name.trim();
+    if (!name || !_liveData[disc]?.anos[ano]) return false;
+    if (_liveData[disc].anos[ano].includes(name)) return false;
+    _liveData[disc].anos[ano].push(name);
+    _persistData();
+    return true;
+  }
+
+  function deleteTopic(disc, ano, name) {
+    const topics = _liveData[disc]?.anos[ano];
+    if (!topics) return false;
+    const idx = topics.indexOf(name);
+    if (idx === -1) return false;
+    topics.splice(idx, 1);
+    const prog = _loadProgress();
+    delete prog[_key(disc, ano, name)];
+    _saveProgress(prog);
+    _persistData();
+    return true;
+  }
+
+  function renameTopic(disc, ano, oldName, newName) {
+    newName = newName.trim();
+    if (!newName || oldName === newName) return false;
+    const topics = _liveData[disc]?.anos[ano];
+    if (!topics) return false;
+    const idx = topics.indexOf(oldName);
+    if (idx === -1 || topics.includes(newName)) return false;
+    topics[idx] = newName;
+    const prog = _loadProgress();
+    const ok = _key(disc, ano, oldName), nk = _key(disc, ano, newName);
+    if (prog[ok]) { prog[nk] = prog[ok]; delete prog[ok]; }
+    _saveProgress(prog);
+    _persistData();
+    return true;
+  }
+
   // Topic progress tracking
   function _loadProgress() {
     try { return JSON.parse(localStorage.getItem(KEY)) || {}; }
@@ -285,7 +334,7 @@ const Cartografias = (() => {
   }
 
   function getSubjectProgress(disc) {
-    const d = DATA[disc]; if (!d) return { total: 0, done: 0, studying: 0 };
+    const d = _liveData[disc]; if (!d) return { total: 0, done: 0, studying: 0 };
     let total = 0, done = 0, studying = 0;
     Object.entries(d.anos).forEach(([ano, topics]) => topics.forEach(t => {
       total++;
@@ -295,8 +344,8 @@ const Cartografias = (() => {
     return { total, done, studying };
   }
 
-  function getAll()          { return DATA; }
+  function getAll()          { return _liveData; }
   function getVestibulares() { return VESTIBULARES; }
 
-  return { getAll, getVestibulares, getStatus, setStatus, toggleStatus, getSubjectProgress, getRelevance, getTopicRelevance };
+  return { getAll, getVestibulares, getStatus, setStatus, toggleStatus, getSubjectProgress, getRelevance, getTopicRelevance, addTopic, deleteTopic, renameTopic };
 })();

@@ -38,6 +38,7 @@ const App = (() => {
     else if (page === 'cronograma')    renderCronograma();
     else if (page === 'vestibulares')  renderVestibulares();
     else if (page === 'metas')         renderMetas();
+    else if (page === 'gestao')        renderGestaoCarto();
   }
 
   /* ── Dashboard ── */
@@ -855,6 +856,115 @@ const App = (() => {
     document.body.appendChild(el); setTimeout(() => el.remove(), 3000);
   }
 
+  /* ── Gestão da Cartografia ── */
+  let _gestaoSubj = '';
+
+  function renderGestaoCarto() {
+    const data = Cartografias.getAll();
+    const subjects = Object.keys(data);
+    if (!_gestaoSubj || !data[_gestaoSubj]) _gestaoSubj = subjects[0];
+
+    const tabs = subjects.map(s => {
+      const active = s === _gestaoSubj ? 'active' : '';
+      return `<button class="gestao-tab ${active}" onclick="App.gestaoSelectSubj('${escHtml(s).replace(/'/g,"&#39;")}')">${escHtml(data[s].icon)} ${escHtml(s)}</button>`;
+    }).join('');
+
+    const d = data[_gestaoSubj];
+    const sections = Object.entries(d.anos).map(([ano, topics]) => {
+      const rows = topics.length
+        ? topics.map(t => _gestaoTopicRow(_gestaoSubj, ano, t)).join('')
+        : `<div class="gestao-empty-section">Nenhum tópico. Adicione um abaixo.</div>`;
+      return `
+        <div class="gestao-section" data-disc="${escHtml(_gestaoSubj)}" data-ano="${escHtml(ano)}">
+          <div class="gestao-section-hdr">
+            <span class="gestao-section-title" style="color:${d.color}">${escHtml(ano)}</span>
+            <span class="gestao-section-count">${topics.length} tópico${topics.length !== 1 ? 's' : ''}</span>
+          </div>
+          <div class="gestao-topic-list">${rows}</div>
+          <div class="gestao-add-row" id="gadd-${escHtml(ano).replace(/\s/g,'-')}">
+            <button class="gestao-btn-add" onclick="App.gestaoShowAdd('${escHtml(ano).replace(/'/g,"&#39;")}')">+ Adicionar tópico</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('gestao-content').innerHTML = `
+      <div class="gestao-tabs">${tabs}</div>
+      <div class="gestao-body">${sections}</div>`;
+  }
+
+  function _gestaoTopicRow(disc, ano, topic) {
+    const sd = escHtml(disc).replace(/'/g,"&#39;");
+    const sa = escHtml(ano).replace(/'/g,"&#39;");
+    const st = escHtml(topic).replace(/'/g,"&#39;");
+    return `<div class="gestao-topic-row" data-topic="${escHtml(topic)}">
+      <span class="gestao-topic-name">${escHtml(topic)}</span>
+      <div class="gestao-topic-btns">
+        <button class="gestao-btn gestao-btn-edit" title="Renomear" onclick="App.gestaoStartEdit(this,'${sd}','${sa}','${st}')">✎</button>
+        <button class="gestao-btn gestao-btn-del"  title="Excluir"  onclick="App.gestaoDelete('${sd}','${sa}','${st}')">✕</button>
+      </div>
+    </div>`;
+  }
+
+  function gestaoSelectSubj(subj) {
+    _gestaoSubj = subj;
+    renderGestaoCarto();
+  }
+
+  function gestaoStartEdit(btn, disc, ano, topic) {
+    const row = btn.closest('.gestao-topic-row');
+    row.innerHTML = `
+      <input class="gestao-edit-input" value="${escHtml(topic)}" onkeydown="if(event.key==='Enter')App.gestaoSaveEdit(this,'${disc.replace(/'/g,"&#39;")}','${ano.replace(/'/g,"&#39;")}','${topic.replace(/'/g,"&#39;")}');if(event.key==='Escape')App.renderGestaoCarto()">
+      <div class="gestao-topic-btns">
+        <button class="gestao-btn gestao-btn-save" onclick="App.gestaoSaveEdit(this.closest('.gestao-topic-row').querySelector('input'),'${disc.replace(/'/g,"&#39;")}','${ano.replace(/'/g,"&#39;")}','${topic.replace(/'/g,"&#39;")}')">✓</button>
+        <button class="gestao-btn gestao-btn-cancel" onclick="App.renderGestaoCarto()">✕</button>
+      </div>`;
+    row.querySelector('input').focus();
+    row.querySelector('input').select();
+  }
+
+  function gestaoSaveEdit(input, disc, ano, oldTopic) {
+    const newName = input.value.trim();
+    if (!newName) { showToast('Nome não pode estar vazio.', 'error'); return; }
+    if (!Cartografias.renameTopic(disc, ano, oldTopic, newName)) {
+      showToast('Tópico já existe ou nome inválido.', 'error'); return;
+    }
+    renderGestaoCarto();
+    showToast('Tópico renomeado.', 'success');
+  }
+
+  function gestaoDelete(disc, ano, topic) {
+    if (!confirm(`Excluir "${topic}" de ${disc} — ${ano}?\nO progresso salvo também será removido.`)) return;
+    Cartografias.deleteTopic(disc, ano, topic);
+    renderGestaoCarto();
+    showToast('Tópico excluído.', 'success');
+  }
+
+  function gestaoShowAdd(ano) {
+    const safeAno = ano.replace(/\s/g, '-');
+    const container = document.getElementById(`gadd-${safeAno}`);
+    if (!container) return;
+    container.innerHTML = `
+      <div class="gestao-add-form">
+        <input class="gestao-edit-input" id="ginput-${safeAno}" placeholder="Nome do novo tópico" onkeydown="if(event.key==='Enter')App.gestaoConfirmAdd('${escHtml(ano).replace(/'/g,"&#39;")}');if(event.key==='Escape')App.renderGestaoCarto()">
+        <button class="gestao-btn gestao-btn-save" onclick="App.gestaoConfirmAdd('${escHtml(ano).replace(/'/g,"&#39;")}')">Adicionar</button>
+        <button class="gestao-btn gestao-btn-cancel" onclick="App.renderGestaoCarto()">Cancelar</button>
+      </div>`;
+    document.getElementById(`ginput-${safeAno}`)?.focus();
+  }
+
+  function gestaoConfirmAdd(ano) {
+    const safeAno = ano.replace(/\s/g, '-');
+    const input = document.getElementById(`ginput-${safeAno}`);
+    if (!input) return;
+    const name = input.value.trim();
+    if (!name) { showToast('Nome não pode estar vazio.', 'error'); return; }
+    if (!Cartografias.addTopic(_gestaoSubj, ano, name)) {
+      showToast('Tópico já existe nesta seção.', 'error'); return;
+    }
+    renderGestaoCarto();
+    showToast(`"${name}" adicionado.`, 'success');
+  }
+
   /* ── Utilities ── */
   function scoreClass(n) {
     if (n >= 80) return 'score-excellent'; if (n >= 65) return 'score-good';
@@ -870,7 +980,10 @@ const App = (() => {
     viewSimulado, editSimulado, deleteSimulado,
     deleteEvent, showAddEventModal,
     openModal, closeModal, saveGoals,
-    showCartografiaModal, toggleTopic, setCartoFilter
+    showCartografiaModal, toggleTopic, setCartoFilter,
+    renderGestaoCarto,
+    gestaoSelectSubj, gestaoStartEdit, gestaoSaveEdit, gestaoDelete,
+    gestaoShowAdd, gestaoConfirmAdd
   };
 })();
 

@@ -975,7 +975,7 @@ const App = (() => {
     const d = data[_gestaoSubj];
     const sections = Object.entries(d.anos).map(([ano, topics]) => {
       const rows = topics.length
-        ? topics.map(t => _gestaoTopicRow(_gestaoSubj, ano, t)).join('')
+        ? topics.map((t, idx) => _gestaoTopicRow(_gestaoSubj, ano, t, idx, topics.length)).join('')
         : `<div class="gestao-empty-section">Nenhum tópico. Adicione um abaixo.</div>`;
       return `
         <div class="gestao-section" data-disc="${escHtml(_gestaoSubj)}" data-ano="${escHtml(ano)}">
@@ -995,14 +995,23 @@ const App = (() => {
       <div class="gestao-body">${sections}</div>`;
   }
 
-  function _gestaoTopicRow(disc, ano, topic) {
+  function _gestaoTopicRow(disc, ano, topic, idx, total) {
     const rel = Cartografias.getTopicRelevance(disc, ano, topic);
     const sd = escHtml(disc).replace(/'/g,"&#39;");
     const sa = escHtml(ano).replace(/'/g,"&#39;");
     const st = escHtml(topic).replace(/'/g,"&#39;");
     const badge = (v, cls) => v ? `<span class="gestao-rel-mini rel-${cls}">${v}</span>` : '';
     const badges = badge(rel.FUVEST,'fuvest') + badge(rel.VUNESP,'vunesp') + badge(rel.FGV,'fgv') + badge(rel.ENEM,'enem');
+    const canUp   = idx > 0;
+    const canDown = idx < total - 1;
+    const upBtn   = canUp
+      ? `<button class="gestao-btn-ord" title="Mover para cima"  onclick="App.gestaoMoveUp('${sd}','${sa}','${st}')">↑</button>`
+      : `<button class="gestao-btn-ord" disabled>↑</button>`;
+    const downBtn = canDown
+      ? `<button class="gestao-btn-ord" title="Mover para baixo" onclick="App.gestaoMoveDown('${sd}','${sa}','${st}')">↓</button>`
+      : `<button class="gestao-btn-ord" disabled>↓</button>`;
     return `<div class="gestao-topic-row" data-topic="${escHtml(topic)}">
+      <div class="gestao-ord-btns">${upBtn}${downBtn}</div>
       <span class="gestao-topic-name">${escHtml(topic)}</span>
       <div class="gestao-topic-rel">${badges}</div>
       <div class="gestao-topic-btns">
@@ -1081,6 +1090,24 @@ const App = (() => {
     toast('Tópico atualizado.', 'success');
   }
 
+  function gestaoMoveUp(disc, ano, topic) {
+    const topics = Cartografias.getAll()[disc]?.anos[ano];
+    if (!topics) return;
+    const idx = topics.indexOf(topic);
+    if (idx <= 0) return;
+    Cartografias.moveTopic(disc, ano, idx, idx - 1);
+    renderGestaoCarto();
+  }
+
+  function gestaoMoveDown(disc, ano, topic) {
+    const topics = Cartografias.getAll()[disc]?.anos[ano];
+    if (!topics) return;
+    const idx = topics.indexOf(topic);
+    if (idx === -1 || idx >= topics.length - 1) return;
+    Cartografias.moveTopic(disc, ano, idx, idx + 1);
+    renderGestaoCarto();
+  }
+
   function gestaoDelete(disc, ano, topic) {
     if (!confirm(`Excluir "${topic}" de ${disc} — ${ano}?\nO progresso salvo também será removido.`)) return;
     Cartografias.deleteTopic(disc, ano, topic);
@@ -1092,10 +1119,19 @@ const App = (() => {
     const safeAno = ano.replace(/\s/g, '-');
     const container = document.getElementById(`gadd-${safeAno}`);
     if (!container) return;
+    const topics = Cartografias.getAll()[_gestaoSubj]?.anos[ano] || [];
+    const sa = escHtml(ano).replace(/'/g,"&#39;");
+    const posOpts = [
+      `<option value="${topics.length}" selected>No final</option>`,
+      `<option value="0">No início</option>`,
+      ...topics.map((t, i) => `<option value="${i + 1}">Depois de: ${escHtml(t)}</option>`)
+    ].join('');
     container.innerHTML = `
       <div class="gestao-add-form">
-        <input class="gestao-edit-input" id="ginput-${safeAno}" placeholder="Nome do novo tópico" onkeydown="if(event.key==='Enter')App.gestaoConfirmAdd('${escHtml(ano).replace(/'/g,"&#39;")}');if(event.key==='Escape')App.renderGestaoCarto()">
-        <button class="gestao-btn gestao-btn-save" onclick="App.gestaoConfirmAdd('${escHtml(ano).replace(/'/g,"&#39;")}')">Adicionar</button>
+        <input class="gestao-edit-input" id="ginput-${safeAno}" placeholder="Nome do novo tópico"
+          onkeydown="if(event.key==='Enter')App.gestaoConfirmAdd('${sa}');if(event.key==='Escape')App.renderGestaoCarto()">
+        <select class="gestao-pos-select" id="gpos-${safeAno}">${posOpts}</select>
+        <button class="gestao-btn gestao-btn-save" onclick="App.gestaoConfirmAdd('${sa}')">Adicionar</button>
         <button class="gestao-btn gestao-btn-cancel" onclick="App.renderGestaoCarto()">Cancelar</button>
       </div>`;
     document.getElementById(`ginput-${safeAno}`)?.focus();
@@ -1104,10 +1140,12 @@ const App = (() => {
   function gestaoConfirmAdd(ano) {
     const safeAno = ano.replace(/\s/g, '-');
     const input = document.getElementById(`ginput-${safeAno}`);
+    const posEl = document.getElementById(`gpos-${safeAno}`);
     if (!input) return;
     const name = input.value.trim();
     if (!name) { toast('Nome não pode estar vazio.', 'error'); return; }
-    if (!Cartografias.addTopic(_gestaoSubj, ano, name)) {
+    const position = posEl ? parseInt(posEl.value) : undefined;
+    if (!Cartografias.addTopic(_gestaoSubj, ano, name, position)) {
       toast('Tópico já existe nesta seção.', 'error'); return;
     }
     renderGestaoCarto();
@@ -1132,6 +1170,7 @@ const App = (() => {
     showCartografiaModal, toggleTopic, setCartoFilter,
     renderGestaoCarto,
     gestaoSelectSubj, gestaoStartEdit, gestaoSaveEdit, gestaoDelete,
+    gestaoMoveUp, gestaoMoveDown,
     gestaoShowAdd, gestaoConfirmAdd,
     updateSimRow
   };

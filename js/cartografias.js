@@ -304,11 +304,26 @@ const Cartografias = (() => {
   })();
   function _persistData() { localStorage.setItem(DATA_KEY, JSON.stringify(_liveData)); }
 
-  function addTopic(disc, ano, name) {
+  function addTopic(disc, ano, name, position) {
     name = name.trim();
     if (!name || !_liveData[disc]?.anos[ano]) return false;
     if (_liveData[disc].anos[ano].includes(name)) return false;
-    _liveData[disc].anos[ano].push(name);
+    const topics = _liveData[disc].anos[ano];
+    if (position !== undefined && position !== null && position >= 0 && position <= topics.length) {
+      topics.splice(position, 0, name);
+    } else {
+      topics.push(name);
+    }
+    _persistData();
+    return true;
+  }
+
+  function moveTopic(disc, ano, fromIdx, toIdx) {
+    const topics = _liveData[disc]?.anos[ano];
+    if (!topics) return false;
+    if (fromIdx < 0 || toIdx < 0 || fromIdx >= topics.length || toIdx >= topics.length || fromIdx === toIdx) return false;
+    const [item] = topics.splice(fromIdx, 1);
+    topics.splice(toIdx, 0, item);
     _persistData();
     return true;
   }
@@ -378,5 +393,5 @@ const Cartografias = (() => {
   function getAll()          { return _liveData; }
   function getVestibulares() { return VESTIBULARES; }
 
-  return { getAll, getVestibulares, getStatus, setStatus, toggleStatus, getSubjectProgress, getRelevance, getTopicRelevance, setTopicRelevance, addTopic, deleteTopic, renameTopic };
+  return { getAll, getVestibulares, getStatus, setStatus, toggleStatus, getSubjectProgress, getRelevance, getTopicRelevance, setTopicRelevance, addTopic, deleteTopic, renameTopic, moveTopic };
 })();

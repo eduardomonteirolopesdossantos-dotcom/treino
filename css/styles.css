@@ -346,9 +346,20 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
 
 .gestao-topic-row {
   display: flex; align-items: center; gap: 8px;
-  padding: 9px 16px; border-bottom: 1px solid var(--border);
+  padding: 7px 16px; border-bottom: 1px solid var(--border);
   transition: background .12s;
 }
+.gestao-ord-btns { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+.gestao-btn-ord {
+  width: 22px; height: 18px; padding: 0;
+  border: 1px solid var(--border); border-radius: 4px;
+  font-size: 10px; line-height: 1; cursor: pointer;
+  background: var(--bg-secondary); color: var(--text-light);
+  display: flex; align-items: center; justify-content: center;
+  transition: all .12s;
+}
+.gestao-btn-ord:hover:not(:disabled) { background: #EEF2FF; border-color: var(--primary); color: var(--primary); }
+.gestao-btn-ord:disabled { opacity: .28; cursor: default; }
 .gestao-topic-row:last-child { border-bottom: none; }
 .gestao-topic-row:hover { background: var(--bg); }
 .gestao-topic-name { flex: 1; font-size: 14px; color: var(--text); }
@@ -408,6 +419,13 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
 
 .gestao-add-form { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .gestao-add-form .gestao-edit-input { min-width: 200px; }
+.gestao-pos-select {
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 6px 8px; font-size: 13px; font-family: inherit;
+  background: #fff; cursor: pointer; outline: none; color: var(--text);
+  max-width: 220px;
+}
+.gestao-pos-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.12); }
 
 /* ── Toast ── */
 .toast {

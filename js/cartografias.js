@@ -118,6 +118,12 @@ const Cartografias = (() => {
   // FGV:    F = Frequente · G = Muito frequente
   // ENEM:   H = Frequente · I = Muito frequente
   // null = não cobre / não se aplica
+  // Section-level defaults (fallback when no topic-level override exists)
+  // FUVEST: A = Nas duas fases · B = Apenas 2ª fase · C = Apenas 1ª fase
+  // VUNESP: D = Frequente · E = Muito frequente
+  // FGV:    F = Frequente · G = Muito frequente
+  // ENEM:   H = Frequente · I = Muito frequente
+  // null = não cobre / não se aplica
   const RELEVANCE = {
     'Biologia': {
       '1º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'F', ENEM: 'I' },
@@ -185,6 +191,74 @@ const Cartografias = (() => {
     },
   };
 
+  // Topic-level overrides — only entries that DIFFER from the section default above.
+  // Structure: RELEVANCE_TOPICS[disciplina][ano][topico] = { FUVEST, VUNESP, FGV, ENEM }
+  const RELEVANCE_TOPICS = {
+    'Biologia': {
+      '1º Ano': {
+        'Biomas':              { FUVEST: 'C', VUNESP: 'E', FGV: 'F', ENEM: 'I' },
+        'Sucessão ecológica':  { FUVEST: 'C', VUNESP: 'E', FGV: 'F', ENEM: 'I' },
+      },
+      'Aprofundamento': {
+        'Vitaminas':                { FUVEST: null, VUNESP: null, FGV: null, ENEM: null },
+        'Histologia animal':        { FUVEST: 'B',  VUNESP: 'D',  FGV: 'F',  ENEM: 'I'  },
+        'Genética de populações':   { FUVEST: 'C',  VUNESP: null, FGV: 'F',  ENEM: 'I'  },
+        'Histologia vegetal':       { FUVEST: null, VUNESP: 'D',  FGV: null, ENEM: null },
+        'Hormônios vegetais':       { FUVEST: null, VUNESP: 'D',  FGV: null, ENEM: 'H'  },
+        'Fotossíntese (avançado)':  { FUVEST: 'A',  VUNESP: 'D',  FGV: null, ENEM: 'H'  },
+      },
+    },
+    'Física': {
+      '1º Ano': {
+        'Propagação de calor':  { FUVEST: 'C', VUNESP: 'E', FGV: 'F', ENEM: 'I' },
+        'Termometria':          { FUVEST: 'C', VUNESP: 'E', FGV: 'F', ENEM: 'I' },
+        'Calorimetria':         { FUVEST: 'C', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+        'Dilatação dos corpos': { FUVEST: 'C', VUNESP: 'D', FGV: 'F', ENEM: 'H' },
+        'Reflexão de luz (óptica)': { FUVEST: 'C', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+        'Refração de luz':      { FUVEST: 'C', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+        'Ótica da visão':       { FUVEST: 'C', VUNESP: 'D', FGV: 'F', ENEM: 'I' },
+        'Espelhos e lentes':    { FUVEST: 'C', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      },
+    },
+    'Química': {
+      '1º Ano': {
+        'Propriedades da matéria':           { FUVEST: 'C', VUNESP: 'D', FGV: 'F', ENEM: 'H' },
+        'Densidade':                          { FUVEST: 'C', VUNESP: 'D', FGV: 'F', ENEM: 'H' },
+        'Separação de misturas':              { FUVEST: 'C', VUNESP: 'E', FGV: 'F', ENEM: 'I' },
+        'Temperatura de fusão e ebulição':    { FUVEST: 'C', VUNESP: 'D', FGV: 'F', ENEM: 'H' },
+        'Radioatividade':                     { FUVEST: 'C', VUNESP: 'D', FGV: 'F', ENEM: 'I' },
+      },
+    },
+    'Matemática': {
+      '1º Ano': {
+        'Porcentagem':        { FUVEST: 'C', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+        'Juros simples e compostos': { FUVEST: 'C', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+      },
+      'Aprofundamento': {
+        'Números complexos: forma algébrica': { FUVEST: 'B', VUNESP: null, FGV: null, ENEM: null },
+      },
+    },
+    'História do Brasil': {
+      '2º Ano': {
+        'Brasil no século XX':               { FUVEST: 'C', VUNESP: 'D', FGV: 'F', ENEM: 'I' },
+        'Abolição e pós-escravidão':         { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
+        'Revoltas da Primeira República':    { FUVEST: 'C', VUNESP: 'D', FGV: 'F', ENEM: 'I' },
+      },
+    },
+    'Português: Literatura': {
+      '3º Ano': {
+        'Obras obrigatórias da FUVEST': { FUVEST: 'B', VUNESP: null, FGV: null, ENEM: null },
+      },
+    },
+  };
+
+  // Returns topic-level relevance if an override exists, otherwise falls back to section default.
+  function getTopicRelevance(disc, ano, topic) {
+    const override = RELEVANCE_TOPICS[disc]?.[ano]?.[topic];
+    if (override !== undefined) return override;
+    return RELEVANCE[disc]?.[ano] || {};
+  }
+
   function getRelevance(disc, ano) {
     return RELEVANCE[disc]?.[ano] || {};
   }
@@ -224,5 +298,5 @@ const Cartografias = (() => {
   function getAll()          { return DATA; }
   function getVestibulares() { return VESTIBULARES; }
 
-  return { getAll, getVestibulares, getStatus, setStatus, toggleStatus, getSubjectProgress, getRelevance };
+  return { getAll, getVestibulares, getStatus, setStatus, toggleStatus, getSubjectProgress, getRelevance, getTopicRelevance };
 })();

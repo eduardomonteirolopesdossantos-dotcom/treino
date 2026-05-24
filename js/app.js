@@ -287,43 +287,43 @@ const App = (() => {
     const html = Object.entries(d.anos)
       .filter(([ano]) => !year || ano === year)
       .map(([ano, allTopics]) => {
-        const rel = Cartografias.getRelevance(subj, ano);
-        // Filter by vestibular letter — hide section if it has no classification or doesn't match
-        if (fuvest && rel.FUVEST !== fuvest) return '';
-        if (vunesp && rel.VUNESP !== vunesp) return '';
-        if (fgv   && rel.FGV    !== fgv)    return '';
-        if (enem  && rel.ENEM   !== enem)   return '';
-
-        const visibleTopics = status
-          ? allTopics.filter(t => Cartografias.getStatus(subj, ano, t) === status)
-          : allTopics;
+        // Filter each topic individually by its own vestibular classification
+        const visibleTopics = allTopics.filter(topic => {
+          const rel = Cartografias.getTopicRelevance(subj, ano, topic);
+          if (fuvest && rel.FUVEST !== fuvest) return false;
+          if (vunesp && rel.VUNESP !== vunesp) return false;
+          if (fgv    && rel.FGV    !== fgv)    return false;
+          if (enem   && rel.ENEM   !== enem)   return false;
+          if (status && Cartografias.getStatus(subj, ano, topic) !== status) return false;
+          return true;
+        });
         if (!visibleTopics.length) return '';
-
-        // Build badges for whichever vestibular filters are active
-        let badges = '';
-        if (fuvest && rel.FUVEST) badges += `<span class="rel-badge rel-fuvest">${rel.FUVEST}</span>`;
-        if (vunesp && rel.VUNESP) badges += `<span class="rel-badge rel-vunesp">${rel.VUNESP}</span>`;
-        if (fgv    && rel.FGV)    badges += `<span class="rel-badge rel-fgv">${rel.FGV}</span>`;
-        if (enem   && rel.ENEM)   badges += `<span class="rel-badge rel-enem">${rel.ENEM}</span>`;
 
         const doneN = allTopics.filter(t => Cartografias.getStatus(subj, ano, t) === 'done').length;
         const pct   = Math.round(doneN / allTopics.length * 100);
 
         const items = visibleTopics.map(topic => {
-          const st = Cartografias.getStatus(subj, ano, topic);
+          const rel = Cartografias.getTopicRelevance(subj, ano, topic);
+          const st  = Cartografias.getStatus(subj, ano, topic);
           const safeSubj  = escHtml(subj).replace(/'/g, '&#39;');
           const safeAno   = escHtml(ano).replace(/'/g, '&#39;');
           const safeTopic = escHtml(topic).replace(/'/g, '&#39;');
+          // Show relevance badges on each topic when a vestibular filter is active
+          let badges = '';
+          if (fuvest && rel.FUVEST) badges += `<span class="rel-badge rel-fuvest">${rel.FUVEST}</span>`;
+          if (vunesp && rel.VUNESP) badges += `<span class="rel-badge rel-vunesp">${rel.VUNESP}</span>`;
+          if (fgv    && rel.FGV)    badges += `<span class="rel-badge rel-fgv">${rel.FGV}</span>`;
+          if (enem   && rel.ENEM)   badges += `<span class="rel-badge rel-enem">${rel.ENEM}</span>`;
           return `<div class="topic-item" style="border-left-color:${SC[st]}"
                onclick="App.toggleTopic(this,'${safeSubj}','${safeAno}','${safeTopic}')">
             <span class="topic-status" style="color:${SC[st]}">${SL[st]}</span>
-            <span class="topic-name">${escHtml(topic)}</span>
+            <span class="topic-name">${escHtml(topic)}${badges}</span>
           </div>`;
         }).join('');
 
         return `<div class="carto-section" style="margin-bottom:18px" data-ano="${escHtml(ano)}">
           <div class="carto-section-header">
-            <span style="font-size:13px;font-weight:600;color:${d.color}">${escHtml(ano)}${badges}</span>
+            <span style="font-size:13px;font-weight:600;color:${d.color}">${escHtml(ano)}</span>
             <span style="font-size:12px;color:var(--text-muted)">${doneN}/${allTopics.length} · ${pct}%</span>
           </div>
           <div class="progress-bar" style="margin-bottom:8px">

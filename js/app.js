@@ -3,6 +3,14 @@ const App = (() => {
   let _cartoSubj = '';
   let _cartoFilters = { year: '', fuvest: '', vunesp: '', fgv: '', enem: '', status: '' };
 
+  const ERR_TYPES = [
+    { key: 'nao_sabia',    label: 'Não sabia',    icon: '❌', color: '#EF4444', hint: 'conteúdo novo' },
+    { key: 'nao_lembrava', label: 'Não lembrava', icon: '🔁', color: '#F97316', hint: 'revisar cartografia' },
+    { key: 'atencao',      label: 'Atenção',       icon: '⚠️', color: '#F59E0B', hint: 'erro de distração' },
+    { key: 'chute',        label: 'Chute',         icon: '🎲', color: '#8B5CF6', hint: 'sem base' },
+    { key: 'duvida',       label: 'Dúvida',        icon: '🤔', color: '#06B6D4', hint: 'entre alternativas' },
+  ];
+
   /* ── Boot ── */
   function init() {
     document.querySelectorAll('.nav-item').forEach(link => {
@@ -483,33 +491,37 @@ const App = (() => {
 
           <div class="form-section">
             <div class="form-section-title">Análise de Erros — Metodologia Escola Mobile</div>
-            <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Após ver o gabarito, classifique o total de erros por causa. Isso orienta o que estudar para o próximo simulado.</p>
-            <div class="error-grid">
-              <div class="error-item">
-                <div class="error-label" style="color:#EF4444">❌ Não sabia</div>
-                <input type="number" class="error-input err-naosab" name="err_nao_sabia" min="0" placeholder="0" value="${erros.nao_sabia ?? ''}">
-                <div style="font-size:10px;color:var(--text-muted);text-align:center">conteúdo novo</div>
-              </div>
-              <div class="error-item">
-                <div class="error-label" style="color:#F97316">🔁 Não lembrava</div>
-                <input type="number" class="error-input err-naolem" name="err_nao_lembrava" min="0" placeholder="0" value="${erros.nao_lembrava ?? ''}">
-                <div style="font-size:10px;color:var(--text-muted);text-align:center">revisar cartografia</div>
-              </div>
-              <div class="error-item">
-                <div class="error-label" style="color:#F59E0B">⚠️ Atenção</div>
-                <input type="number" class="error-input err-atenc" name="err_atencao" min="0" placeholder="0" value="${erros.atencao ?? ''}">
-                <div style="font-size:10px;color:var(--text-muted);text-align:center">erro de distração</div>
-              </div>
-              <div class="error-item">
-                <div class="error-label" style="color:#8B5CF6">🎲 Chute</div>
-                <input type="number" class="error-input err-chute" name="err_chute" min="0" placeholder="0" value="${erros.chute ?? ''}">
-                <div style="font-size:10px;color:var(--text-muted);text-align:center">sem base</div>
-              </div>
-              <div class="error-item">
-                <div class="error-label" style="color:#06B6D4">🤔 Dúvida</div>
-                <input type="number" class="error-input err-duvida" name="err_duvida" min="0" placeholder="0" value="${erros.duvida ?? ''}">
-                <div style="font-size:10px;color:var(--text-muted);text-align:center">entre alternativas</div>
-              </div>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Após ver o gabarito, classifique os erros de cada disciplina por causa. Isso orienta o que estudar para o próximo simulado.</p>
+            <div class="sim-score-table-wrap">
+              <table class="sim-score-table err-table">
+                <thead>
+                  <tr>
+                    <th class="col-disc">Disciplina</th>
+                    ${ERR_TYPES.map(t => `<th class="col-err" title="${t.hint}"><span class="err-th-icon">${t.icon}</span><span class="err-th-label" style="color:${t.color}">${t.label}</span></th>`).join('')}
+                    <th class="col-num">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${subjects.map(subj => {
+                    const se = (erros[subj] && typeof erros[subj] === 'object') ? erros[subj] : {};
+                    const cells = ERR_TYPES.map(t =>
+                      `<td class="col-err"><input type="number" class="sim-input err-cell-input" data-type="${t.key}" min="0" placeholder="—" value="${se[t.key] ?? ''}" oninput="App.updateErrRow(this)"></td>`
+                    ).join('');
+                    return `<tr data-subj="${escHtml(subj)}" class="err-row">
+                      <td class="col-disc">${escHtml(subj)}</td>
+                      ${cells}
+                      <td class="col-num err-row-total">—</td>
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td class="col-disc sim-total-label">Total Geral</td>
+                    ${ERR_TYPES.map(t => `<td class="col-err" id="errt-${t.key}">—</td>`).join('')}
+                    <td class="col-num" id="errt-total">—</td>
+                  </tr>
+                </tfoot>
+              </table>
             </div>
           </div>
 
@@ -533,9 +545,16 @@ const App = (() => {
     document.querySelectorAll('.sim-score-table tbody tr').forEach(row => {
       const ai = row.querySelector('.sim-acerto-input');
       const ei = row.querySelector('.sim-erro-input');
-      if (ai.value !== '' || ei.value !== '') updateSimRow(ai);
+      if (ai && ei && (ai.value !== '' || ei.value !== '')) updateSimRow(ai);
     });
     _updateSimTotals();
+
+    // Initialize error table row totals (edit mode)
+    document.querySelectorAll('.err-table tbody tr').forEach(row => {
+      const first = row.querySelector('.err-cell-input');
+      if (first) updateErrRow(first);
+    });
+    _updateErrTotals();
   }
 
   function handleFormSubmit(e) {
@@ -544,8 +563,11 @@ const App = (() => {
     const scores = {}, acertos = {}, erradas = {};
     document.querySelectorAll('.sim-score-table tbody tr').forEach(row => {
       const subj = row.dataset.subj;
-      const aVal = row.querySelector('.sim-acerto-input').value;
-      const eVal = row.querySelector('.sim-erro-input').value;
+      const aEl = row.querySelector('.sim-acerto-input');
+      const eEl = row.querySelector('.sim-erro-input');
+      if (!aEl || !eEl) return; // skip err-table rows
+      const aVal = aEl.value;
+      const eVal = eEl.value;
       if (aVal !== '' || eVal !== '') {
         const a = parseInt(aVal) || 0;
         const er = parseInt(eVal) || 0;
@@ -555,13 +577,20 @@ const App = (() => {
         scores[subj] = total > 0 ? Math.round(a / total * 100) : 0;
       }
     });
-    const erros = {
-      nao_sabia:    Number(fd.get('err_nao_sabia'))    || 0,
-      nao_lembrava: Number(fd.get('err_nao_lembrava')) || 0,
-      atencao:      Number(fd.get('err_atencao'))      || 0,
-      chute:        Number(fd.get('err_chute'))        || 0,
-      duvida:       Number(fd.get('err_duvida'))       || 0,
-    };
+    const erros = {};
+    document.querySelectorAll('.err-table tbody tr').forEach(row => {
+      const subj = row.dataset.subj;
+      const subjErrs = {};
+      let hasAny = false;
+      ERR_TYPES.forEach(t => {
+        const inp = row.querySelector(`.err-cell-input[data-type="${t.key}"]`);
+        if (inp && inp.value !== '') {
+          hasAny = true;
+          subjErrs[t.key] = parseInt(inp.value) || 0;
+        }
+      });
+      if (hasAny) erros[subj] = subjErrs;
+    });
     const payload = { name: fd.get('name'), date: fd.get('date'), type: fd.get('type'), scores, acertos, erradas, erros, notes: fd.get('notes') };
 
     if (editingId) { Storage.updateSimulado(editingId, payload); toast('Simulado atualizado!', 'success'); }
@@ -603,8 +632,11 @@ const App = (() => {
     const rows = document.querySelectorAll('.sim-score-table tbody tr');
     let totalA = 0, totalE = 0, anyFilled = false;
     rows.forEach(row => {
-      const aVal = row.querySelector('.sim-acerto-input').value;
-      const eVal = row.querySelector('.sim-erro-input').value;
+      const aEl = row.querySelector('.sim-acerto-input');
+      const eEl = row.querySelector('.sim-erro-input');
+      if (!aEl || !eEl) return; // skip err-table rows that share the wrapper class
+      const aVal = aEl.value;
+      const eVal = eEl.value;
       if (aVal !== '' || eVal !== '') {
         anyFilled = true;
         totalA += parseInt(aVal) || 0;
@@ -628,6 +660,41 @@ const App = (() => {
       tpEl.textContent = '—';
       tpEl.style.color = '';
     }
+  }
+
+  /* ── Error table helpers ── */
+  function updateErrRow(input) {
+    const row = input.closest('tr');
+    let rowTotal = 0, anyFilled = false;
+    row.querySelectorAll('.err-cell-input').forEach(inp => {
+      if (inp.value !== '') { anyFilled = true; rowTotal += parseInt(inp.value) || 0; }
+    });
+    const totalEl = row.querySelector('.err-row-total');
+    if (totalEl) totalEl.textContent = anyFilled ? rowTotal : '—';
+    _updateErrTotals();
+  }
+
+  function _updateErrTotals() {
+    const colTotals = {};
+    ERR_TYPES.forEach(t => { colTotals[t.key] = 0; });
+    let grandTotal = 0, anyFilled = false;
+    document.querySelectorAll('.err-table tbody tr').forEach(row => {
+      ERR_TYPES.forEach(t => {
+        const inp = row.querySelector(`.err-cell-input[data-type="${t.key}"]`);
+        if (inp && inp.value !== '') {
+          anyFilled = true;
+          const v = parseInt(inp.value) || 0;
+          colTotals[t.key] += v;
+          grandTotal += v;
+        }
+      });
+    });
+    ERR_TYPES.forEach(t => {
+      const el = document.getElementById(`errt-${t.key}`);
+      if (el) el.textContent = anyFilled ? colTotals[t.key] : '—';
+    });
+    const gtEl = document.getElementById('errt-total');
+    if (gtEl) gtEl.textContent = anyFilled ? grandTotal : '—';
   }
 
   /* ── Recomendações ── */
@@ -1172,7 +1239,7 @@ const App = (() => {
     gestaoSelectSubj, gestaoStartEdit, gestaoSaveEdit, gestaoDelete,
     gestaoMoveUp, gestaoMoveDown,
     gestaoShowAdd, gestaoConfirmAdd,
-    updateSimRow
+    updateSimRow, updateErrRow
   };
 })();
 

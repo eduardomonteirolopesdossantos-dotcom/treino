@@ -262,6 +262,15 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
 .sim-score-table tfoot td.col-pct { text-align: center; }
 .sim-total-label { font-size: 13px; letter-spacing: .02em; color: var(--text); }
 
+/* ── Error analysis table ── */
+.err-table thead th.col-err { text-align: center; min-width: 82px; padding: 8px 6px; }
+.err-table td.col-err        { text-align: center; padding: 6px 4px; }
+.err-th-icon  { display: block; font-size: 15px; line-height: 1.4; }
+.err-th-label { display: block; font-size: 10px; font-weight: 700;
+                text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; }
+.err-row-total { font-weight: 700; color: var(--text-light); }
+.err-table tfoot td.col-err { text-align: center; font-weight: 700; }
+
 /* ── Table ── */
 .table-container { background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden; }
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }

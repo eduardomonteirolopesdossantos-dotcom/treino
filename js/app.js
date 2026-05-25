@@ -843,25 +843,6 @@ const App = (() => {
     const upcomingVest      = vestDates.filter(e => new Date(e.date + 'T00:00:00') >= today);
     const pastVest          = vestDates.filter(e => new Date(e.date + 'T00:00:00') <  today).reverse();
 
-    // School calendar banner
-    const cal = Storage.getSchoolCalendar();
-    const sims = Storage.getSimulados();
-    const calRows = cal.map(s => {
-      const d = new Date(s.date + 'T00:00:00');
-      const done = sims.some(sim => sim.date === s.date || sim.name.includes(s.code));
-      const isToday = d.getTime() === today.getTime();
-      const isPast  = d < today && !isToday;
-      const daysLeft = Math.round((d - today) / 86400000);
-      let badge = '';
-      if (isToday)       badge = '<span class="cal-today">HOJE</span>';
-      else if (!isPast && daysLeft <= 30) badge = `<span class="cal-next">${daysLeft}d</span>`;
-      return `<div class="cal-row">
-        <span class="cal-code">${s.code}</span>
-        <span class="cal-date">${d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})}</span>
-        <span class="cal-name">${escHtml(s.name)}</span>
-        ${done ? '<span class="cal-done">✓ realizado</span>' : badge}
-      </div>`;
-    }).join('');
 
     function evCard(ev) {
       const d = new Date(ev.date + 'T00:00:00');
@@ -905,10 +886,6 @@ const App = (() => {
       </div>`;
 
     el.innerHTML = `
-      <div class="school-cal" style="margin-bottom:22px">
-        <h4>📋 Calendário Escola Mobile — Simulados 2026</h4>
-        ${calRows}
-      </div>
       ${vestSection}
       <div style="margin-bottom:18px">
         <button class="btn btn-primary" onclick="App.showAddEventModal()">+ Adicionar Evento</button>

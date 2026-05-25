@@ -2,6 +2,7 @@ const App = (() => {
   let editingId = null;
   let _cartoSubj = '';
   let _cartoFilters = { year: '', fuvest: '', vunesp: '', fgv: '', enem: '', status: '' };
+  let _editingVestIdx = null;
 
   const ERR_TYPES = [
     { key: 'nao_sabia',    label: 'Não sabia',    icon: '❌', color: '#EF4444', hint: 'conteúdo novo' },
@@ -863,13 +864,17 @@ const App = (() => {
     const el   = document.getElementById('vestibulares-content');
     const list = Cartografias.getVestibulares();
 
-    const cards = list.map(v => `
+    const cards = list.map((v, idx) => `
       <div class="vest-card" style="border-top-color:${v.cor}">
         <div class="vest-header">
           <span class="vest-icon">${v.icon}</span>
-          <div>
+          <div style="flex:1;min-width:0">
             <div class="vest-nome" style="color:${v.cor}">${escHtml(v.nome)}</div>
             <div class="vest-desc">${escHtml(v.descricao)}</div>
+          </div>
+          <div class="vest-card-btns">
+            <button class="gestao-btn gestao-btn-edit" title="Editar" onclick="App.vestibularEdit(${idx})">✎</button>
+            <button class="gestao-btn gestao-btn-del"  title="Excluir" onclick="App.vestibularDelete(${idx})">✕</button>
           </div>
         </div>
         <div class="vest-rows">
@@ -884,7 +889,80 @@ const App = (() => {
         <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#fff">📌 Dica da Escola Mobile</h3>
         <p style="font-size:14px;opacity:.9">Pesquise o edital de cada vestibular que Bia pretende fazer. Os editais do ENEM e FUVEST saem em <strong>julho/agosto</strong>. Verifique datas, formatos e leituras obrigatórias com a Coordenação.</p>
       </div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+        <button class="btn btn-primary" onclick="App.vestibularNew()">+ Novo Vestibular</button>
+      </div>
       <div class="vest-grid">${cards}</div>`;
+  }
+
+  /* ── Vestibulares CRUD ── */
+  function _vestibularForm(v) {
+    const field = (id, label, type, val, ph) => {
+      const ctrl = type === 'textarea'
+        ? `<textarea class="form-control" id="vf-${id}" rows="2" placeholder="${ph}">${escHtml(val || '')}</textarea>`
+        : type === 'color'
+          ? `<input type="color" class="form-control vf-color" id="vf-${id}" value="${val || '#4F46E5'}">`
+          : `<input type="text" class="form-control" id="vf-${id}" value="${escHtml(val || '')}" placeholder="${ph}">`;
+      return `<div class="form-group"><label class="form-label">${label}</label>${ctrl}</div>`;
+    };
+    return `
+      <div style="display:grid;grid-template-columns:1fr 72px 100px;gap:12px">
+        ${field('nome',     'Nome *',  'text',     v?.nome,  'Ex: FUVEST')}
+        ${field('icon',     'Ícone',   'text',     v?.icon,  '🎓')}
+        ${field('cor',      'Cor',     'color',    v?.cor,   '')}
+      </div>
+      ${field('descricao', 'Descrição',   'text',     v?.descricao, 'Ex: Universidade de São Paulo (USP)')}
+      ${field('formato',   'Formato',     'textarea', v?.formato,   'Ex: 2 fases: 1ª Múltipla escolha + 2ª Dissertativa')}
+      ${field('datas',     'Datas',       'text',     v?.datas,     'Ex: Jan/Fev (edital a partir de jul/ago)')}
+      ${field('peso',      'Cálculo / Peso', 'textarea', v?.peso,  'Ex: 60% FUVEST + 40% ENEM')}
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+        <button class="btn btn-ghost" onclick="App.closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="App.vestibularSave()">💾 Salvar</button>
+      </div>`;
+  }
+
+  function vestibularNew() {
+    _editingVestIdx = null;
+    openModal('+ Novo Vestibular', _vestibularForm(null));
+  }
+
+  function vestibularEdit(idx) {
+    const v = Cartografias.getVestibulares()[idx];
+    if (!v) return;
+    _editingVestIdx = idx;
+    openModal(`✎ Editar — ${escHtml(v.nome)}`, _vestibularForm(v));
+  }
+
+  function vestibularDelete(idx) {
+    const v = Cartografias.getVestibulares()[idx];
+    if (!v) return;
+    if (!confirm(`Excluir "${v.nome}"?\nEsta ação não pode ser desfeita.`)) return;
+    Cartografias.deleteVestibular(idx);
+    renderVestibulares();
+    toast(`"${v.nome}" removido.`, 'success');
+  }
+
+  function vestibularSave() {
+    const nome = document.getElementById('vf-nome')?.value.trim();
+    if (!nome) { toast('O nome é obrigatório.', 'error'); return; }
+    const v = {
+      nome,
+      icon:      document.getElementById('vf-icon')?.value.trim()      || '🎓',
+      cor:       document.getElementById('vf-cor')?.value              || '#4F46E5',
+      descricao: document.getElementById('vf-descricao')?.value.trim() || '',
+      formato:   document.getElementById('vf-formato')?.value.trim()   || '',
+      datas:     document.getElementById('vf-datas')?.value.trim()     || '',
+      peso:      document.getElementById('vf-peso')?.value.trim()      || '',
+    };
+    if (_editingVestIdx !== null) {
+      Cartografias.updateVestibular(_editingVestIdx, v);
+      toast(`"${v.nome}" atualizado.`, 'success');
+    } else {
+      Cartografias.addVestibular(v);
+      toast(`"${v.nome}" adicionado.`, 'success');
+    }
+    closeModal();
+    renderVestibulares();
   }
 
   /* ── Metas ── */
@@ -1239,6 +1317,7 @@ const App = (() => {
     gestaoSelectSubj, gestaoStartEdit, gestaoSaveEdit, gestaoDelete,
     gestaoMoveUp, gestaoMoveDown,
     gestaoShowAdd, gestaoConfirmAdd,
+    vestibularNew, vestibularEdit, vestibularDelete, vestibularSave,
     updateSimRow, updateErrRow
   };
 })();

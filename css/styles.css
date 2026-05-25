@@ -509,7 +509,9 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
 /* Vestibulares */
 .vest-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
 .vest-card { background: var(--bg-card); border-radius: var(--radius); padding: 20px; border: 1px solid var(--border); box-shadow: var(--shadow); border-top: 4px solid; }
-.vest-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.vest-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
+.vest-card-btns { display: flex; gap: 4px; flex-shrink: 0; margin-left: auto; }
+.vf-color { height: 40px; padding: 3px 5px; cursor: pointer; }
 .vest-icon { font-size: 24px; }
 .vest-nome { font-size: 16px; font-weight: 700; }
 .vest-desc { font-size: 12px; color: var(--text-muted); margin-top: 1px; }

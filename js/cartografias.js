@@ -390,8 +390,34 @@ const Cartografias = (() => {
     return { total, done, studying };
   }
 
-  function getAll()          { return _liveData; }
-  function getVestibulares() { return VESTIBULARES; }
+  // ── Vestibulares CRUD ────────────────────────────────────────────────────
+  const VEST_KEY = 'vestibular_bia_vestibulares_v1';
+  let _liveVestibulares = (() => {
+    try { const s = localStorage.getItem(VEST_KEY); if (s) return JSON.parse(s); }
+    catch(e) {}
+    return JSON.parse(JSON.stringify(VESTIBULARES));
+  })();
+  function _persistVestibulares() { localStorage.setItem(VEST_KEY, JSON.stringify(_liveVestibulares)); }
 
-  return { getAll, getVestibulares, getStatus, setStatus, toggleStatus, getSubjectProgress, getRelevance, getTopicRelevance, setTopicRelevance, addTopic, deleteTopic, renameTopic, moveTopic };
+  function addVestibular(v) {
+    _liveVestibulares.push(v);
+    _persistVestibulares();
+  }
+  function updateVestibular(idx, v) {
+    if (idx < 0 || idx >= _liveVestibulares.length) return false;
+    _liveVestibulares[idx] = v;
+    _persistVestibulares();
+    return true;
+  }
+  function deleteVestibular(idx) {
+    if (idx < 0 || idx >= _liveVestibulares.length) return false;
+    _liveVestibulares.splice(idx, 1);
+    _persistVestibulares();
+    return true;
+  }
+
+  function getAll()          { return _liveData; }
+  function getVestibulares() { return _liveVestibulares; }
+
+  return { getAll, getVestibulares, addVestibular, updateVestibular, deleteVestibular, getStatus, setStatus, toggleStatus, getSubjectProgress, getRelevance, getTopicRelevance, setTopicRelevance, addTopic, deleteTopic, renameTopic, moveTopic };
 })();

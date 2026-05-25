@@ -790,12 +790,58 @@ const App = (() => {
   }
 
   /* ── Cronograma ── */
+  function _getVestDates() {
+    const entries = [];
+    Cartografias.getVestibulares().forEach(v => {
+      if (!Array.isArray(v.datas)) return;
+      v.datas.forEach(d => {
+        if (!d.data) return;
+        entries.push({ date: d.data, nome: v.nome, icon: v.icon, cor: v.cor || '#4F46E5', fase: d.fase || '1', tipos: d.tipos || [] });
+      });
+    });
+    entries.sort((a, b) => a.date.localeCompare(b.date));
+    return entries;
+  }
+
+  function _vestEvCard(e, today) {
+    const d        = new Date(e.date + 'T00:00:00');
+    const daysLeft = Math.round((d - today) / 86400000);
+    const day      = String(d.getDate()).padStart(2, '0');
+    const month    = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+    const TIPO     = { dissertativa: 'Dissertativa', redacao: 'Redação', teste: 'Teste' };
+    const tiposStr = e.tipos.map(t => TIPO[t] || t).join(' + ');
+    const faseStr  = e.fase === '2' ? '2ª fase' : '1ª fase';
+    let txt, cls;
+    if      (daysLeft === 0) { txt = 'Hoje!';         cls = 'ev-urgent'; }
+    else if (daysLeft === 1) { txt = 'Amanhã!';       cls = 'ev-urgent'; }
+    else if (daysLeft <=  7) { txt = `${daysLeft}d`;  cls = 'ev-soon';   }
+    else if (daysLeft <   0) { txt = 'Realizado';     cls = '';          }
+    else                     { txt = `${daysLeft}d`;  cls = 'ev-ok';     }
+    const dateBg = daysLeft < 0 ? 'var(--text-muted)' : e.cor;
+    return `
+      <div class="event-card">
+        <div class="event-date" style="background:${dateBg}">
+          <div class="event-day">${day}</div>
+          <div class="event-month">${month}</div>
+        </div>
+        <div class="event-info">
+          <div class="event-name">${escHtml(e.icon)} ${escHtml(e.nome)}</div>
+          <div class="event-type">${escHtml(faseStr)}${tiposStr ? ' · ' + escHtml(tiposStr) : ''}</div>
+        </div>
+        <span class="${cls}" style="font-size:13px;font-weight:600;flex-shrink:0;white-space:nowrap">${txt}</span>
+      </div>`;
+  }
+
   function renderCronograma() {
     const el    = document.getElementById('cronograma-content');
     const today = new Date(); today.setHours(0,0,0,0);
     const all   = Storage.getEvents();
     const upcoming = all.filter(e => new Date(e.date + 'T00:00:00') >= today);
     const past     = all.filter(e => new Date(e.date + 'T00:00:00') <  today).reverse();
+
+    const vestDates         = _getVestDates();
+    const upcomingVest      = vestDates.filter(e => new Date(e.date + 'T00:00:00') >= today);
+    const pastVest          = vestDates.filter(e => new Date(e.date + 'T00:00:00') <  today).reverse();
 
     // School calendar banner
     const cal = Storage.getSchoolCalendar();
@@ -844,11 +890,26 @@ const App = (() => {
         </div>`;
     }
 
+    const vestSection = `
+      <div class="card" style="margin-bottom:22px">
+        <h3 style="font-size:15px;font-weight:600;margin-bottom:14px">🏆 Provas e Vestibulares</h3>
+        ${upcomingVest.length
+          ? `<div class="event-list">${upcomingVest.map(e => _vestEvCard(e, today)).join('')}</div>`
+          : `<p style="color:var(--text-muted);font-size:14px">Nenhum vestibular com data cadastrada. <a href="#" onclick="App.navigate('vestibulares');return false" style="color:var(--primary)">Cadastrar datas →</a></p>`
+        }
+        ${pastVest.length ? `
+          <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:12px">
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">✓ Realizados</div>
+            <div class="event-list">${pastVest.map(e => _vestEvCard(e, today)).join('')}</div>
+          </div>` : ''}
+      </div>`;
+
     el.innerHTML = `
       <div class="school-cal" style="margin-bottom:22px">
         <h4>📋 Calendário Escola Mobile — Simulados 2026</h4>
         ${calRows}
       </div>
+      ${vestSection}
       <div style="margin-bottom:18px">
         <button class="btn btn-primary" onclick="App.showAddEventModal()">+ Adicionar Evento</button>
       </div>

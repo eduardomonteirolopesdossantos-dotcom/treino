@@ -511,7 +511,31 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
 .vest-card { background: var(--bg-card); border-radius: var(--radius); padding: 20px; border: 1px solid var(--border); box-shadow: var(--shadow); border-top: 4px solid; }
 .vest-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
 .vest-card-btns { display: flex; gap: 4px; flex-shrink: 0; margin-left: auto; }
-.vf-color { height: 40px; padding: 3px 5px; cursor: pointer; }
+.vest-datas-val { line-height: 1.8; }
+.vf-color { width: 100%; height: 38px; padding: 3px 5px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
+
+/* Structured date rows in vestibular form */
+.vest-dates-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.vest-date-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: var(--bg-secondary); border-radius: 8px;
+  padding: 9px 12px; border: 1px solid var(--border);
+}
+.vest-date-num { font-size: 11px; font-weight: 700; color: var(--text-muted); flex-shrink: 0; min-width: 16px; }
+.vd-date, .vd-fase {
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 5px 8px; font-size: 13px; font-family: inherit;
+  background: #fff; outline: none; flex-shrink: 0;
+}
+.vd-date { width: 148px; }
+.vd-fase { width: 108px; cursor: pointer; }
+.vd-date:focus, .vd-fase:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(79,70,229,.12); }
+.vd-tipo-chk {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 13px; color: var(--text-light); cursor: pointer; white-space: nowrap;
+}
+.vd-tipo-chk input[type="checkbox"] { width: 14px; height: 14px; margin: 0; cursor: pointer; accent-color: var(--primary); }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
 .vest-icon { font-size: 24px; }
 .vest-nome { font-size: 16px; font-weight: 700; }
 .vest-desc { font-size: 12px; color: var(--text-muted); margin-top: 1px; }

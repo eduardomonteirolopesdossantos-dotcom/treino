@@ -879,8 +879,7 @@ const App = (() => {
         </div>
         <div class="vest-rows">
           <div class="vest-row"><span class="vest-row-label">Formato</span><span class="vest-row-val">${escHtml(v.formato)}</span></div>
-          <div class="vest-row"><span class="vest-row-label">Datas</span><span class="vest-row-val">${escHtml(v.datas)}</span></div>
-          <div class="vest-row"><span class="vest-row-label">Cálculo</span><span class="vest-row-val">${escHtml(v.peso)}</span></div>
+          <div class="vest-row"><span class="vest-row-label">Datas</span><span class="vest-row-val vest-datas-val">${_fmtDatas(v.datas)}</span></div>
         </div>
       </div>`).join('');
 
@@ -896,29 +895,96 @@ const App = (() => {
   }
 
   /* ── Vestibulares CRUD ── */
+  function _vestDateRow(idx, d) {
+    const fase = d?.fase || '1';
+    const tipos = d?.tipos || [];
+    const chk = (val, lbl) =>
+      `<label class="vd-tipo-chk"><input type="checkbox" value="${val}"${tipos.includes(val) ? ' checked' : ''}> ${lbl}</label>`;
+    return `<div class="vest-date-row">
+      <span class="vest-date-num">${idx + 1}.</span>
+      <input type="date" class="vd-date" value="${d?.data || ''}">
+      <select class="vd-fase">
+        <option value="1"${fase === '1' ? ' selected' : ''}>1ª fase</option>
+        <option value="2"${fase === '2' ? ' selected' : ''}>2ª fase</option>
+      </select>
+      ${chk('dissertativa', 'Dissertativa')}
+      ${chk('redacao',      'Redação')}
+      ${chk('teste',        'Teste')}
+      <button type="button" class="gestao-btn gestao-btn-del" title="Remover" onclick="App.vestibularRemoveDate(this)">✕</button>
+    </div>`;
+  }
+
+  function _fmtDatas(datas) {
+    if (!datas || datas.length === 0) return '—';
+    if (typeof datas === 'string') return escHtml(datas); // legado
+    const TIPO = { dissertativa: 'Dissertativa', redacao: 'Redação', teste: 'Teste' };
+    return datas.map(d => {
+      const dt   = d.data ? new Date(d.data + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
+      const fase = d.fase === '2' ? '2ª fase' : '1ª fase';
+      const tip  = (d.tipos || []).map(t => TIPO[t] || t).join(' + ');
+      return `${dt} · ${fase}${tip ? ' · ' + tip : ''}`;
+    }).join('<br>');
+  }
+
   function _vestibularForm(v) {
     const field = (id, label, type, val, ph) => {
       const ctrl = type === 'textarea'
         ? `<textarea class="form-control" id="vf-${id}" rows="2" placeholder="${ph}">${escHtml(val || '')}</textarea>`
         : type === 'color'
-          ? `<input type="color" class="form-control vf-color" id="vf-${id}" value="${val || '#4F46E5'}">`
+          ? `<input type="color" class="vf-color" id="vf-${id}" value="${val || '#4F46E5'}">`
           : `<input type="text" class="form-control" id="vf-${id}" value="${escHtml(val || '')}" placeholder="${ph}">`;
       return `<div class="form-group"><label class="form-label">${label}</label>${ctrl}</div>`;
     };
+    const existingDates = Array.isArray(v?.datas) ? v.datas : [];
+    const dateRows = (existingDates.length > 0 ? existingDates : [null]).map((d, i) => _vestDateRow(i, d)).join('');
+    const hideAdd  = existingDates.length >= 4;
     return `
-      <div style="display:grid;grid-template-columns:1fr 72px 100px;gap:12px">
-        ${field('nome',     'Nome *',  'text',     v?.nome,  'Ex: FUVEST')}
-        ${field('icon',     'Ícone',   'text',     v?.icon,  '🎓')}
-        ${field('cor',      'Cor',     'color',    v?.cor,   '')}
+      <div style="display:grid;grid-template-columns:1fr 64px 96px;gap:12px;align-items:end">
+        ${field('nome',     'Nome *',  'text',  v?.nome,  'Ex: FUVEST')}
+        ${field('icon',     'Ícone',   'text',  v?.icon,  '🎓')}
+        <div class="form-group">
+          <label class="form-label">Cor</label>
+          <input type="color" class="vf-color" id="vf-cor" value="${v?.cor || '#4F46E5'}">
+        </div>
       </div>
-      ${field('descricao', 'Descrição',   'text',     v?.descricao, 'Ex: Universidade de São Paulo (USP)')}
-      ${field('formato',   'Formato',     'textarea', v?.formato,   'Ex: 2 fases: 1ª Múltipla escolha + 2ª Dissertativa')}
-      ${field('datas',     'Datas',       'text',     v?.datas,     'Ex: Jan/Fev (edital a partir de jul/ago)')}
-      ${field('peso',      'Cálculo / Peso', 'textarea', v?.peso,  'Ex: 60% FUVEST + 40% ENEM')}
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      ${field('descricao', 'Descrição', 'text',     v?.descricao, 'Ex: Universidade de São Paulo (USP)')}
+      ${field('formato',   'Formato',   'textarea', v?.formato,   'Ex: 2 fases: 1ª Múltipla escolha + 2ª Dissertativa')}
+      <div class="form-group">
+        <label class="form-label">Datas <span style="font-size:11px;font-weight:400;color:var(--text-muted)">(1 a 4)</span></label>
+        <div class="vest-dates-list" id="vf-dates-list">${dateRows}</div>
+        <button type="button" class="btn btn-ghost btn-sm" id="vf-add-date" onclick="App.vestibularAddDate()"${hideAdd ? ' style="display:none"' : ''}>+ Adicionar data</button>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">
         <button class="btn btn-ghost" onclick="App.closeModal()">Cancelar</button>
         <button class="btn btn-primary" onclick="App.vestibularSave()">💾 Salvar</button>
       </div>`;
+  }
+
+  function vestibularAddDate() {
+    const list = document.getElementById('vf-dates-list');
+    if (!list) return;
+    const count = list.querySelectorAll('.vest-date-row').length;
+    if (count >= 4) return;
+    list.insertAdjacentHTML('beforeend', _vestDateRow(count, null));
+    _vestUpdateDateBtns();
+  }
+
+  function vestibularRemoveDate(btn) {
+    btn.closest('.vest-date-row')?.remove();
+    const list = document.getElementById('vf-dates-list');
+    if (!list) return;
+    list.querySelectorAll('.vest-date-row').forEach((r, i) => {
+      r.querySelector('.vest-date-num').textContent = `${i + 1}.`;
+    });
+    _vestUpdateDateBtns();
+  }
+
+  function _vestUpdateDateBtns() {
+    const list = document.getElementById('vf-dates-list');
+    if (!list) return;
+    const count = list.querySelectorAll('.vest-date-row').length;
+    const btn = document.getElementById('vf-add-date');
+    if (btn) btn.style.display = count >= 4 ? 'none' : '';
   }
 
   function vestibularNew() {
@@ -945,14 +1011,20 @@ const App = (() => {
   function vestibularSave() {
     const nome = document.getElementById('vf-nome')?.value.trim();
     if (!nome) { toast('O nome é obrigatório.', 'error'); return; }
+    const datas = [];
+    document.querySelectorAll('#vf-dates-list .vest-date-row').forEach(row => {
+      const dt    = row.querySelector('.vd-date')?.value;
+      const fase  = row.querySelector('.vd-fase')?.value || '1';
+      const tipos = Array.from(row.querySelectorAll('input[type="checkbox"]:checked')).map(c => c.value);
+      if (dt) datas.push({ data: dt, fase, tipos });
+    });
     const v = {
       nome,
       icon:      document.getElementById('vf-icon')?.value.trim()      || '🎓',
       cor:       document.getElementById('vf-cor')?.value              || '#4F46E5',
       descricao: document.getElementById('vf-descricao')?.value.trim() || '',
       formato:   document.getElementById('vf-formato')?.value.trim()   || '',
-      datas:     document.getElementById('vf-datas')?.value.trim()     || '',
-      peso:      document.getElementById('vf-peso')?.value.trim()      || '',
+      datas,
     };
     if (_editingVestIdx !== null) {
       Cartografias.updateVestibular(_editingVestIdx, v);
@@ -1318,6 +1390,7 @@ const App = (() => {
     gestaoMoveUp, gestaoMoveDown,
     gestaoShowAdd, gestaoConfirmAdd,
     vestibularNew, vestibularEdit, vestibularDelete, vestibularSave,
+    vestibularAddDate, vestibularRemoveDate,
     updateSimRow, updateErrRow
   };
 })();

@@ -65,21 +65,12 @@ const Cartografias = (() => {
         'Aprofundamento': ['Cartografia avançada','China e o poder global asiático','Geopolítica do Oriente Médio','Crise climática: acordos e perspectivas']
       }
     },
-    'Filosofia': {
+    'Filosofia e Sociologia': {
       icon: '🤔', color: '#8B5CF6',
       anos: {
         '2º Ano': ['Filosofia Antiga: Platão','Poder e Controle Social: Foucault','Existencialismo: Sartre','Atitude dogmática e crítica','Nascimento da filosofia','Iluminismo e razão','Gênero e filosofia'],
         '3º Ano': ['Pré-socráticos','Filosofia Antiga: Aristóteles','Filosofia Medieval (Agostinho, Tomás)','Revolução Científica','Filosofia Moderna: Descartes e Hume','Iluminismo: Rousseau, Locke, Voltaire','Fenomenologia: Husserl','Nietzsche: crítica à moral','Hannah Arendt: totalitarismo e política','Habermas: ética discursiva','Beauvoir: existencialismo e feminismo'],
         'Aprofundamento': ['Fenomenologia avançada','Estética e filosofia da arte','Ética e moral contemporânea','Heidegger: ser e tempo']
-      }
-    },
-    'Português: Literatura': {
-      icon: '📚', color: '#EC4899',
-      anos: {
-        '1º Ano': ['Crítica literária e teoria','Elementos estruturais da narrativa','Linguagem literária: poesia lírica','O papel da tradição','Trovadorismo e poesia medieval'],
-        '2º Ano': ['Classicismo (Camões)','Barroco (Vieira, Gregório de Matos)','Neoclassicismo e Arcadismo','Romantismo','Realismo e Naturalismo','Linguagem visual: pintura e escultura','Intertextualidade','Literatura e sociedade (gênero, raça)','Parnasianismo'],
-        '3º Ano': ['Pré-modernismo (Euclides, Lima Barreto)','Simbolismo','Modernismo: poesia da 1ª fase','Modernismo: prosa da 1ª fase','Modernismo: prosa regionalista','Vanguardas europeias','Prosa pós-45 no Brasil','Poesia contemporânea','Poesia e canção pós-45'],
-        'Aprofundamento': ['Obras obrigatórias da FUVEST']
       }
     },
     'Português: Língua e Produção': {
@@ -167,16 +158,10 @@ const Cartografias = (() => {
       '3º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'F', ENEM: 'I' },
       'Aprofundamento':  { FUVEST: 'B', VUNESP: 'D', FGV: null, ENEM: 'H' },
     },
-    'Filosofia': {
+    'Filosofia e Sociologia': {
       '2º Ano':          { FUVEST: 'A', VUNESP: null, FGV: 'G', ENEM: 'I' },
       '3º Ano':          { FUVEST: 'A', VUNESP: null, FGV: 'G', ENEM: 'I' },
       'Aprofundamento':  { FUVEST: 'B', VUNESP: null, FGV: 'F', ENEM: 'H' },
-    },
-    'Português: Literatura': {
-      '1º Ano':          { FUVEST: 'C', VUNESP: 'D', FGV: 'F', ENEM: 'H' },
-      '2º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
-      '3º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
-      'Aprofundamento':  { FUVEST: 'B', VUNESP: 'E', FGV: 'G', ENEM: 'H' },
     },
     'Português: Língua e Produção': {
       '1º Ano':          { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
@@ -243,11 +228,6 @@ const Cartografias = (() => {
         'Brasil no século XX':               { FUVEST: 'C', VUNESP: 'D', FGV: 'F', ENEM: 'I' },
         'Abolição e pós-escravidão':         { FUVEST: 'A', VUNESP: 'E', FGV: 'G', ENEM: 'I' },
         'Revoltas da Primeira República':    { FUVEST: 'C', VUNESP: 'D', FGV: 'F', ENEM: 'I' },
-      },
-    },
-    'Português: Literatura': {
-      '3º Ano': {
-        'Obras obrigatórias da FUVEST': { FUVEST: 'B', VUNESP: null, FGV: null, ENEM: null },
       },
     },
   };

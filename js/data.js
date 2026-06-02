@@ -3,14 +3,14 @@ const Storage = (() => {
 
   const SUBJECTS = [
     'Matemática', 'Física', 'Química', 'Biologia',
-    'História', 'Geografia', 'Filosofia', 'Sociologia',
-    'Português', 'Literatura', 'Inglês', 'Redação'
+    'História', 'Geografia', 'Filosofia e Sociologia',
+    'Português', 'Inglês', 'Redação'
   ];
 
   const DEFAULT_GOALS = {
     'Matemática': 70, 'Física': 65, 'Química': 65, 'Biologia': 70,
-    'História': 70, 'Geografia': 70, 'Filosofia': 65, 'Sociologia': 65,
-    'Português': 75, 'Literatura': 70, 'Inglês': 70, 'Redação': 70
+    'História': 70, 'Geografia': 70, 'Filosofia e Sociologia': 65,
+    'Português': 75, 'Inglês': 70, 'Redação': 70
   };
 
   function _default() {
@@ -24,7 +24,7 @@ const Storage = (() => {
 
   function _save(data) { localStorage.setItem(KEY, JSON.stringify(data)); }
 
-  function getSubjects() { return _load().subjects; }
+  function getSubjects() { return [...SUBJECTS]; }
   function getGoals()    { return _load().goals; }
 
   function saveGoals(goals) {
@@ -126,9 +126,9 @@ const Storage = (() => {
     const sampleDates = ['2026-03-07', '2026-04-11', '2026-05-23'];
     const sampleNames = ['S1 — FUVEST (Questões selecionadas)', 'S2 — FUVEST (Simulado próprio)', 'S3 — FUVEST SAS'];
     const scoreMatrix = [
-      { Matemática:57, Física:51, Química:54, Biologia:62, História:64, Geografia:67, Filosofia:59, Sociologia:61, Português:69, Literatura:64, Inglês:71, Redação:59 },
-      { Matemática:61, Física:54, Química:57, Biologia:67, História:67, Geografia:69, Filosofia:62, Sociologia:64, Português:72, Literatura:67, Inglês:74, Redação:63 },
-      { Matemática:65, Física:57, Química:60, Biologia:70, História:70, Geografia:72, Filosofia:65, Sociologia:66, Português:74, Literatura:69, Inglês:76, Redação:66 },
+      { Matemática:57, Física:51, Química:54, Biologia:62, História:64, Geografia:67, 'Filosofia e Sociologia':60, Português:69, Inglês:71, Redação:59 },
+      { Matemática:61, Física:54, Química:57, Biologia:67, História:67, Geografia:69, 'Filosofia e Sociologia':63, Português:72, Inglês:74, Redação:63 },
+      { Matemática:65, Física:57, Química:60, Biologia:70, História:70, Geografia:72, 'Filosofia e Sociologia':66, Português:74, Inglês:76, Redação:66 },
     ];
     const erros = [
       { nao_sabia:8, nao_lembrava:5, atencao:3, chute:2, duvida:4 },

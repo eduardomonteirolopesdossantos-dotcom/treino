@@ -50,8 +50,9 @@ const App = (() => {
     else if (page === 'cronograma')    renderCronograma();
     else if (page === 'vestibulares')  renderVestibulares();
     else if (page === 'metas')         renderMetas();
-    else if (page === 'estudos')       renderCronogramaEstudos();
-    else if (page === 'gestao')        renderGestaoCarto();
+    else if (page === 'estudos')            renderCronogramaEstudos();
+    else if (page === 'dashboard-estudos') renderDashboardEstudos();
+    else if (page === 'gestao')             renderGestaoCarto();
   }
 
   /* ── Dashboard ── */
@@ -1254,7 +1255,7 @@ const App = (() => {
         </div>
         ${tops?`<div class="sched-sc-topics">${escHtml(tops)}</div>`:''}
         <div class="sched-sc-btns">
-          <button class="sched-done-btn${s.done?' done':''}" onclick="App.schedToggleDone('${s.id}');event.stopPropagation()" title="${s.done?'Desfazer':'Concluir'}">${s.done?'✓':'○'}</button>
+          <button class="sched-real-btn${s.done?' sched-real-sim':' sched-real-nao'}" onclick="App.schedToggleDone('${s.id}');event.stopPropagation()">${s.done?'✅ Sim':'❌ Não'}</button>
           <button class="sched-btn-sm" onclick="App.schedEdit('${s.id}');event.stopPropagation()">✎</button>
           <button class="sched-btn-sm danger" onclick="App.schedDelete('${s.id}');event.stopPropagation()">✕</button>
         </div>
@@ -1262,7 +1263,7 @@ const App = (() => {
     return `
       <div class="sched-session-full${s.done?' done':''}" style="border-left-color:${color}">
         <div class="sched-sf-row">
-          <button class="sched-done-btn lg${s.done?' done':''}" onclick="App.schedToggleDone('${s.id}')">${s.done?'✅':'○'}</button>
+          <button class="sched-real-btn-lg${s.done?' sched-real-sim':' sched-real-nao'}" onclick="App.schedToggleDone('${s.id}')">${s.done?'✅ Sim':'❌ Não'}</button>
           <div class="sched-sf-body">
             <div class="sched-sf-top">
               <span>${icon}</span>
@@ -1383,6 +1384,184 @@ const App = (() => {
     _editingSchedId = null;
     closeModal();
     renderCronogramaEstudos();
+  }
+
+  /* ── Dashboard de Estudos ── */
+  function renderDashboardEstudos() {
+    const el = document.getElementById('dashboard-estudos-content');
+    if (!el) return;
+    const schedule = Storage.getSchedule();
+    const subjects = Storage.getSubjects();
+    const cd       = Cartografias.getAll();
+
+    if (!schedule.length) {
+      el.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">📊</div>
+          <h3>Sem sessões de estudo registradas</h3>
+          <p>Adicione sessões no <a href="#" onclick="App.navigate('estudos');return false" style="color:var(--primary)">Cronograma de Estudos</a> para ver o dashboard.</p>
+        </div>`;
+      return;
+    }
+
+    // ── Overall stats ──
+    const totalSessions  = schedule.length;
+    const doneSessions   = schedule.filter(s => s.done).length;
+    const plannedHours   = schedule.reduce((a, s) => a + (s.hours || 0), 0);
+    const doneHours      = schedule.filter(s => s.done).reduce((a, s) => a + (s.hours || 0), 0);
+    const completionRate = totalSessions > 0 ? Math.round(doneSessions / totalSessions * 100) : 0;
+
+    // ── Per-subject stats ──
+    const subjectData = {};
+    subjects.forEach(subj => {
+      const entries = schedule.filter(s => s.subject === subj);
+      if (!entries.length) return;
+      const planned = entries.reduce((a, s) => a + (s.hours || 0), 0);
+      const done    = entries.filter(s => s.done).reduce((a, s) => a + (s.hours || 0), 0);
+      subjectData[subj] = { planned, done, color: cd[subj]?.color || '#4F46E5', icon: cd[subj]?.icon || '📚' };
+    });
+
+    // ── Weekly evolution — last 8 weeks ──
+    const today = new Date(); today.setHours(0,0,0,0);
+    const dow   = today.getDay();
+    const daysToMon = dow === 0 ? 6 : dow - 1;
+    const thisMonday = new Date(today);
+    thisMonday.setDate(today.getDate() - daysToMon);
+
+    const weeks = [];
+    for (let i = 7; i >= 0; i--) {
+      const wStart = new Date(thisMonday); wStart.setDate(thisMonday.getDate() - i * 7);
+      const wEnd   = new Date(wStart);     wEnd.setDate(wStart.getDate() + 6);
+      const wStartStr = wStart.toISOString().slice(0,10);
+      const wEndStr   = wEnd.toISOString().slice(0,10);
+      const wSessions = schedule.filter(s => s.date >= wStartStr && s.date <= wEndStr);
+      weeks.push({
+        label:   wStart.toLocaleDateString('pt-BR', { day:'2-digit', month:'short' }),
+        planned: wSessions.reduce((a, s) => a + (s.hours||0), 0),
+        done:    wSessions.filter(s => s.done).reduce((a, s) => a + (s.hours||0), 0),
+      });
+    }
+
+    // ── Stat cards ──
+    const rateCls = completionRate >= 70 ? ' success' : completionRate >= 40 ? '' : ' danger';
+    const statCards = `
+      <div class="grid-4">
+        <div class="stat-card">
+          <div class="stat-icon">📋</div>
+          <div class="stat-label">Sessões Planejadas</div>
+          <div class="stat-value">${totalSessions}</div>
+          <div class="stat-sub">${doneSessions} realizadas</div>
+        </div>
+        <div class="stat-card accent">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-label">Horas Planejadas</div>
+          <div class="stat-value">${plannedHours.toFixed(1)}h</div>
+          <div class="stat-sub">no cronograma</div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-icon">✅</div>
+          <div class="stat-label">Horas Realizadas</div>
+          <div class="stat-value">${doneHours.toFixed(1)}h</div>
+          <div class="stat-sub">${plannedHours > 0 ? Math.round(doneHours/plannedHours*100)+'% do planejado' : '—'}</div>
+        </div>
+        <div class="stat-card${rateCls}">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-label">Taxa de Conclusão</div>
+          <div class="stat-value">${completionRate}%</div>
+          <div class="stat-sub">das sessões marcadas</div>
+        </div>
+      </div>`;
+
+    // ── Subject progress rows ──
+    const subjRows = Object.entries(subjectData)
+      .sort((a, b) => b[1].planned - a[1].planned)
+      .map(([subj, d]) => {
+        const pct = d.planned > 0 ? Math.min(Math.round(d.done / d.planned * 100), 100) : 0;
+        return `
+          <div class="dest-subj-row">
+            <div class="dest-subj-info">
+              <span>${d.icon}</span>
+              <span class="dest-subj-name" style="color:${d.color}">${escHtml(subj)}</span>
+            </div>
+            <div class="dest-subj-hours">
+              <span class="dest-hours-done">${d.done.toFixed(1)}h</span>
+              <span class="dest-hours-sep"> / </span>
+              <span class="dest-hours-plan">${d.planned.toFixed(1)}h plan.</span>
+            </div>
+            <div class="dest-subj-bar">
+              <div class="dest-bar-fill" style="width:${pct}%;background:${d.color}"></div>
+            </div>
+            <div class="dest-subj-pct" style="color:${d.color}">${pct}%</div>
+          </div>`;
+      }).join('');
+
+    el.innerHTML = `
+      ${statCards}
+      <div class="grid-2">
+        <div class="chart-card">
+          <h3>📊 Planejado vs Realizado por Matéria</h3>
+          <div class="chart-wrap"><canvas id="chart-dest-subj"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>📈 Evolução Semanal — últimas 8 semanas</h3>
+          <div class="chart-wrap"><canvas id="chart-dest-week"></canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="font-size:15px;font-weight:600;margin-bottom:16px">📚 Detalhamento por Matéria</h3>
+        <div class="dest-subj-list">${subjRows || '<p style="color:var(--text-muted);font-size:14px">Nenhuma sessão por matéria ainda.</p>'}</div>
+      </div>`;
+
+    setTimeout(() => {
+      // Chart 1 — grouped bar: subject planned vs done
+      const c1 = document.getElementById('chart-dest-subj');
+      if (c1) {
+        const ex = Chart.getChart(c1); if (ex) ex.destroy();
+        const lbls = Object.keys(subjectData).map(s => s.length > 9 ? s.substring(0,9)+'…' : s);
+        new Chart(c1, {
+          type: 'bar',
+          data: {
+            labels: lbls,
+            datasets: [
+              { label:'Planejado', data: Object.values(subjectData).map(d=>d.planned), backgroundColor:'#6D28D940', borderColor:'#6D28D9', borderWidth:1, borderRadius:4 },
+              { label:'Realizado', data: Object.values(subjectData).map(d=>d.done),    backgroundColor:'#10B98140', borderColor:'#10B981', borderWidth:1, borderRadius:4 },
+            ]
+          },
+          options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{ labels:{ font:{ family:'Inter', size:11 } } } },
+            scales:{
+              x:{ ticks:{ font:{ family:'Inter', size:10 } } },
+              y:{ beginAtZero:true, title:{ display:true, text:'Horas', font:{ family:'Inter', size:11 } }, ticks:{ font:{ family:'Inter', size:10 } } }
+            }
+          }
+        });
+      }
+
+      // Chart 2 — weekly evolution
+      const c2 = document.getElementById('chart-dest-week');
+      if (c2) {
+        const ex = Chart.getChart(c2); if (ex) ex.destroy();
+        new Chart(c2, {
+          type: 'bar',
+          data: {
+            labels: weeks.map(w => w.label),
+            datasets: [
+              { label:'Planejado', data: weeks.map(w=>w.planned), backgroundColor:'#6D28D940', borderColor:'#6D28D9', borderWidth:1, borderRadius:4 },
+              { label:'Realizado', data: weeks.map(w=>w.done),    backgroundColor:'#10B98140', borderColor:'#10B981', borderWidth:1, borderRadius:4 },
+            ]
+          },
+          options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{ labels:{ font:{ family:'Inter', size:11 } } } },
+            scales:{
+              x:{ ticks:{ font:{ family:'Inter', size:10 } } },
+              y:{ beginAtZero:true, title:{ display:true, text:'Horas', font:{ family:'Inter', size:11 } }, ticks:{ font:{ family:'Inter', size:10 } } }
+            }
+          }
+        });
+      }
+    }, 50);
   }
 
   /* ── Metas ── */
@@ -1742,7 +1921,8 @@ const App = (() => {
     vestibularAddDate, vestibularRemoveDate,
     updateSimRow, updateErrRow,
     schedSetView, schedNavigate, schedNavigateMonth,
-    schedAddModal, schedEdit, schedDelete, schedToggleDone, schedSave, schedLoadTopics
+    schedAddModal, schedEdit, schedDelete, schedToggleDone, schedSave, schedLoadTopics,
+    renderDashboardEstudos
   };
 })();
 

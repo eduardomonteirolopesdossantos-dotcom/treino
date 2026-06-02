@@ -43,7 +43,7 @@ async function handleStorage(request, env) {
   if (request.method === 'GET') {
     const raw = await env.VESTIBULAR_KV.get('backup');
     return new Response(raw || '{}', {
-      headers: { ...CORS, 'Content-Type': 'application/json' },
+      headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     });
   }
 

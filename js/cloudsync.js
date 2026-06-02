@@ -52,9 +52,16 @@ const CloudSync = (() => {
         body:    JSON.stringify(bundle),
       });
       if (r.ok) {
-        _origSet(TS_KEY, String(bundle._ts));
-        _status('saved');
-        setTimeout(() => _status('idle'), 3000);
+        const resp = await r.json().catch(() => ({}));
+        if (resp.ok === true) {
+          _origSet(TS_KEY, String(bundle._ts));
+          _status('saved');
+          setTimeout(() => _status('idle'), 3000);
+        } else {
+          // Worker respondeu 200 mas KV não estava configurado
+          console.warn('[CloudSync] push: worker sem KV binding', resp);
+          _status('error');
+        }
       } else {
         _status('error');
       }
@@ -63,10 +70,24 @@ const CloudSync = (() => {
     }
   }
 
+  /* ── Toast: mensagem rápida de feedback ── */
+  function _toast(msg, color = '#2563eb') {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    Object.assign(t.style, {
+      position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
+      background: color, color: '#fff', padding: '10px 22px', borderRadius: '8px',
+      fontSize: '14px', fontWeight: '500', zIndex: '9999',
+      boxShadow: '0 4px 16px rgba(0,0,0,.2)', transition: 'opacity .4s',
+    });
+    document.body.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3000);
+  }
+
   /* ── Pull: carrega dados do KV (apenas se mais recentes) ── */
   async function pull() {
     try {
-      const r = await fetch(API);
+      const r = await fetch(API, { cache: 'no-store' });
       if (!r.ok) return false;
       const cloud = await r.json();
       if (!cloud || !cloud._ts) return false;
@@ -78,6 +99,8 @@ const CloudSync = (() => {
       // Carrega do cloud se: não tem dados locais OU cloud é mais recente
       if (!hasLocal || cloud._ts > localTs) {
         _unbundle(cloud);
+        // Mostra toast DEPOIS que o DOM estiver pronto
+        setTimeout(() => _toast('☁️ Dados carregados da nuvem!'), 800);
         return true; // sinaliza que app deve re-renderizar
       }
       // Dados locais são mais recentes — envia para sincronizar o cloud

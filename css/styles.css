@@ -574,6 +574,90 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
   z-index: 100;
 }
 
+/* ── Cronograma de Estudos ── */
+.sched-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+.sched-view-btns { display:flex; gap:3px; background:var(--bg); border-radius:8px; padding:3px; border:1px solid var(--border); }
+.sched-view-btn { border:none; background:transparent; padding:6px 14px; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; color:var(--text-light); transition:all var(--t); font-family:inherit; }
+.sched-view-btn.active { background:var(--bg-card); color:var(--primary); box-shadow:var(--shadow); }
+
+.sched-nav { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+.sched-nav-lbl { font-size:15px; font-weight:600; text-align:center; flex:1; text-transform:capitalize; }
+
+/* Week view */
+.sched-week-wrap { overflow-x:auto; }
+.sched-week-grid { display:grid; grid-template-columns:repeat(7,minmax(110px,1fr)); gap:8px; min-width:600px; }
+.sched-week-col { background:var(--bg-card); border-radius:10px; border:1px solid var(--border); overflow:hidden; min-height:130px; }
+.sched-week-col.sched-w-today { border-color:var(--primary); box-shadow:0 0 0 2px rgba(79,70,229,.15); }
+.sched-week-col.sched-w-past { opacity:.8; }
+.sched-week-col-hdr { display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 4px; background:var(--bg); border-bottom:1px solid var(--border); }
+.sched-wday { font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; }
+.sched-wdate { font-size:18px; font-weight:700; line-height:1.1; color:var(--text); }
+.sched-wdate.sched-wdate-today { background:var(--primary); color:#fff; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-size:15px; }
+.sched-wday-hrs { font-size:10px; font-weight:600; color:var(--primary); background:#EDE9FE; border-radius:4px; padding:1px 5px; }
+.sched-week-col-body { padding:6px; display:flex; flex-direction:column; gap:5px; }
+.sched-add-day { background:none; border:1.5px dashed var(--border); border-radius:6px; width:100%; padding:4px; font-size:16px; color:var(--text-muted); cursor:pointer; transition:all var(--t); }
+.sched-add-day:hover { border-color:var(--primary); color:var(--primary); }
+
+/* Session compact (week) */
+.sched-session-compact { background:var(--bg); border-radius:6px; padding:6px 8px; border-left:3px solid; font-size:12px; }
+.sched-session-compact.done { opacity:.55; }
+.sched-sc-top { display:flex; justify-content:space-between; align-items:center; gap:4px; margin-bottom:2px; }
+.sched-sc-subj { font-weight:600; font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+.sched-sc-hrs { font-size:11px; color:var(--text-muted); flex-shrink:0; }
+.sched-sc-topics { font-size:10px; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:4px; }
+.sched-sc-btns { display:flex; gap:3px; }
+.sched-done-btn { border:none; background:none; cursor:pointer; font-size:13px; color:var(--text-muted); padding:1px 3px; border-radius:3px; transition:color var(--t); line-height:1; }
+.sched-done-btn.done { color:var(--success); }
+.sched-done-btn.lg { font-size:20px; padding:0; margin-top:1px; }
+.sched-btn-sm { border:none; background:none; cursor:pointer; font-size:11px; color:var(--text-muted); padding:2px 5px; border-radius:3px; transition:all var(--t); font-family:inherit; }
+.sched-btn-sm:hover { background:var(--bg); color:var(--text); }
+.sched-btn-sm.danger:hover { color:var(--danger); }
+
+/* Month view */
+.sched-month-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+.sched-month-hdr { text-align:center; font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; padding:6px 2px; }
+.sched-month-cell { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:5px 6px; min-height:70px; cursor:pointer; transition:border-color var(--t); overflow:hidden; }
+.sched-month-cell:hover { border-color:var(--primary); }
+.sched-mc-empty { background:transparent; border:none; cursor:default; min-height:70px; }
+.sched-mc-today { border-color:var(--primary); background:#EDE9FE18; }
+.sched-mc-past { opacity:.7; }
+.sched-mc-num { font-size:12px; font-weight:600; margin-bottom:3px; display:flex; align-items:center; gap:4px; }
+.sched-mc-hrs { font-size:10px; font-weight:600; color:var(--primary); background:#EDE9FE; border-radius:3px; padding:0 4px; }
+.sched-mc-pill { font-size:10px; font-weight:500; border-radius:3px; padding:2px 4px; margin-bottom:2px; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block; transition:opacity var(--t); }
+.sched-mc-pill:hover { opacity:.75; }
+.sched-mc-pill.done { text-decoration:line-through; opacity:.55; }
+.sched-mc-more { font-size:10px; color:var(--text-muted); margin-top:1px; }
+
+/* List view */
+.sched-list-section { margin-bottom:24px; }
+.sched-list-past { opacity:.8; }
+.sched-list-sec-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:14px; }
+.sched-list-group { margin-bottom:16px; }
+.sched-list-date-hdr { display:flex; align-items:center; justify-content:space-between; padding-bottom:6px; border-bottom:1px solid var(--border); margin-bottom:8px; }
+.sched-list-date-label { font-size:14px; font-weight:600; text-transform:capitalize; }
+.sched-list-date-total { font-size:12px; color:var(--primary); font-weight:600; background:#EDE9FE; border-radius:4px; padding:2px 8px; }
+
+/* Session full card (list) */
+.sched-session-full { background:var(--bg-card); border-radius:8px; border:1px solid var(--border); border-left:4px solid; padding:12px 14px; margin-bottom:8px; box-shadow:var(--shadow); }
+.sched-session-full.done { opacity:.65; }
+.sched-sf-row { display:flex; align-items:flex-start; gap:10px; }
+.sched-sf-body { flex:1; min-width:0; }
+.sched-sf-top { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:3px; }
+.sched-sf-subj { font-weight:600; font-size:15px; }
+.sched-hours-badge { background:#EDE9FE; color:var(--primary); border-radius:4px; padding:1px 8px; font-size:12px; font-weight:600; }
+.sched-sf-topics { font-size:12px; color:var(--text-muted); margin-top:2px; }
+.sched-sf-notes { font-size:12px; color:var(--text-muted); font-style:italic; margin-top:3px; }
+.sched-sf-btns { display:flex; gap:4px; flex-shrink:0; }
+
+/* Topics form */
+.sf-topics-wrap { max-height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:10px 12px; background:var(--bg); }
+.sf-topic-section { margin-bottom:10px; }
+.sf-topic-section:last-child { margin-bottom:0; }
+.sf-topic-ano { font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px; padding-bottom:3px; border-bottom:1px solid var(--border); }
+.sf-topic-list { display:flex; flex-direction:column; gap:4px; }
+.sf-topic-chk { display:flex; align-items:center; gap:7px; font-size:13px; color:var(--text); cursor:pointer; padding:2px 0; }
+.sf-topic-chk input[type="checkbox"] { width:14px; height:14px; accent-color:var(--primary); cursor:pointer; flex-shrink:0; }
+
 @media (max-width: 1000px) { .carto-grid { grid-template-columns: repeat(2,1fr); } }
 @media (max-width: 700px)  {
   .carto-grid { grid-template-columns: 1fr; }

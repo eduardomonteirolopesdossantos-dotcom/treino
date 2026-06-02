@@ -3,6 +3,9 @@ const App = (() => {
   let _cartoSubj = '';
   let _cartoFilters = { year: '', fuvest: '', vunesp: '', fgv: '', enem: '', status: '' };
   let _editingVestIdx = null;
+  let _schedView    = 'semana';
+  let _schedRefDate = new Date();
+  let _editingSchedId = null;
 
   const ERR_TYPES = [
     { key: 'nao_sabia',    label: 'Não sabia',    icon: '❌', color: '#EF4444', hint: 'conteúdo novo' },
@@ -47,6 +50,7 @@ const App = (() => {
     else if (page === 'cronograma')    renderCronograma();
     else if (page === 'vestibulares')  renderVestibulares();
     else if (page === 'metas')         renderMetas();
+    else if (page === 'estudos')       renderCronogramaEstudos();
     else if (page === 'gestao')        renderGestaoCarto();
   }
 
@@ -1093,6 +1097,294 @@ const App = (() => {
     renderVestibulares();
   }
 
+  /* ── Cronograma de Estudos ── */
+  function renderCronogramaEstudos() {
+    const el = document.getElementById('estudos-content');
+    if (!el) return;
+    const schedule = Storage.getSchedule();
+    const views = [
+      { id:'lista',  label:'☰ Lista'   },
+      { id:'semana', label:'📅 Semana'  },
+      { id:'mes',    label:'🗓️ Mês'    },
+    ];
+    const viewBtns = views.map(v =>
+      `<button class="sched-view-btn${_schedView===v.id?' active':''}" onclick="App.schedSetView('${v.id}')">${v.label}</button>`
+    ).join('');
+    let content;
+    if      (_schedView === 'lista')  content = _renderSchedList(schedule);
+    else if (_schedView === 'semana') content = _renderSchedWeek(schedule);
+    else                              content = _renderSchedMonth(schedule);
+    el.innerHTML = `
+      <div class="sched-toolbar">
+        <div class="sched-view-btns">${viewBtns}</div>
+        <button class="btn btn-primary" onclick="App.schedAddModal()">+ Adicionar Sessão</button>
+      </div>
+      <div class="sched-content">${content}</div>`;
+  }
+
+  function schedSetView(v)         { _schedView = v; renderCronogramaEstudos(); }
+  function schedNavigate(days)     { const d=new Date(_schedRefDate); d.setDate(d.getDate()+days); _schedRefDate=d; renderCronogramaEstudos(); }
+  function schedNavigateMonth(delta){ const d=new Date(_schedRefDate); d.setMonth(d.getMonth()+delta); _schedRefDate=d; renderCronogramaEstudos(); }
+
+  function _renderSchedList(schedule) {
+    const today = new Date().toISOString().slice(0,10);
+    if (!schedule.length) return `
+      <div class="empty-state">
+        <div class="empty-state-icon">📖</div>
+        <h3>Nenhuma sessão agendada</h3>
+        <p>Planeje seus estudos clicando em "+ Adicionar Sessão".</p>
+      </div>`;
+    const sorted = [...schedule].sort((a,b) => a.date.localeCompare(b.date));
+    const byDate = {};
+    sorted.forEach(s => { if (!byDate[s.date]) byDate[s.date]=[]; byDate[s.date].push(s); });
+    const upcoming = Object.entries(byDate).filter(([d]) => d >= today);
+    const past     = Object.entries(byDate).filter(([d]) => d <  today).reverse();
+    const renderGroup = ([date, sessions]) => {
+      const d = new Date(date + 'T12:00:00');
+      const label = d.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+      const totalH = sessions.reduce((s,e) => s+(e.hours||0), 0);
+      return `<div class="sched-list-group">
+        <div class="sched-list-date-hdr">
+          <span class="sched-list-date-label">${label}</span>
+          <span class="sched-list-date-total">${totalH}h</span>
+        </div>
+        ${sessions.map(s => _schedSessionCard(s,'full')).join('')}
+      </div>`;
+    };
+    return `
+      ${upcoming.length
+        ? `<div class="sched-list-section"><div class="sched-list-sec-title">📅 Próximas sessões</div>${upcoming.map(renderGroup).join('')}</div>`
+        : '<p style="color:var(--text-muted);font-size:14px;margin-bottom:20px">Nenhuma sessão futura agendada.</p>'}
+      ${past.length
+        ? `<div class="sched-list-section sched-list-past"><div class="sched-list-sec-title">✓ Realizadas</div>${past.map(renderGroup).join('')}</div>`
+        : ''}`;
+  }
+
+  function _renderSchedWeek(schedule) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const ref   = new Date(_schedRefDate); ref.setHours(0,0,0,0);
+    const dow   = ref.getDay();
+    const mon   = new Date(ref); mon.setDate(ref.getDate() - (dow===0 ? 6 : dow-1));
+    const sun   = new Date(mon); sun.setDate(mon.getDate()+6);
+    const fmt   = d => d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+    const title = `${fmt(mon)} – ${fmt(sun)} ${sun.getFullYear()}`;
+    const DAYS  = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+    const cols  = Array.from({length:7}, (_,i) => {
+      const d       = new Date(mon); d.setDate(mon.getDate()+i);
+      const dateStr = d.toISOString().slice(0,10);
+      const isToday = d.getTime()===today.getTime();
+      const isPast  = d < today;
+      const sessions = schedule.filter(s => s.date===dateStr);
+      const totalH   = sessions.reduce((s,e) => s+(e.hours||0), 0);
+      return `
+        <div class="sched-week-col${isToday?' sched-w-today':''}${isPast?' sched-w-past':''}">
+          <div class="sched-week-col-hdr">
+            <span class="sched-wday">${DAYS[i]}</span>
+            <span class="sched-wdate${isToday?' sched-wdate-today':''}">${String(d.getDate()).padStart(2,'0')}</span>
+            ${totalH>0?`<span class="sched-wday-hrs">${totalH}h</span>`:''}
+          </div>
+          <div class="sched-week-col-body">
+            ${sessions.map(s => _schedSessionCard(s,'compact')).join('')}
+            <button class="sched-add-day" onclick="App.schedAddModal('${dateStr}')">+</button>
+          </div>
+        </div>`;
+    }).join('');
+    return `
+      <div class="sched-nav">
+        <button class="btn btn-ghost btn-sm" onclick="App.schedNavigate(-7)">‹ Anterior</button>
+        <span class="sched-nav-lbl">${title}</span>
+        <button class="btn btn-ghost btn-sm" onclick="App.schedNavigate(7)">Próxima ›</button>
+      </div>
+      <div class="sched-week-wrap"><div class="sched-week-grid">${cols}</div></div>`;
+  }
+
+  function _renderSchedMonth(schedule) {
+    const ref   = new Date(_schedRefDate);
+    const year  = ref.getFullYear(), month = ref.getMonth();
+    const title = ref.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+    const today = new Date(); today.setHours(0,0,0,0);
+    const first = new Date(year, month, 1);
+    const last  = new Date(year, month+1, 0).getDate();
+    const offset = first.getDay()===0 ? 6 : first.getDay()-1;
+    const DAYS  = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+    const hdrs  = DAYS.map(d=>`<div class="sched-month-hdr">${d}</div>`).join('');
+    const empty = Array.from({length:offset},()=>'<div class="sched-mc-empty"></div>').join('');
+    const cells = Array.from({length:last},(_,i) => {
+      const day     = i+1;
+      const date    = new Date(year, month, day);
+      const dateStr = date.toISOString().slice(0,10);
+      const isToday = date.getTime()===today.getTime();
+      const isPast  = date < today;
+      const sessions = schedule.filter(s => s.date===dateStr);
+      const totalH   = sessions.reduce((s,e) => s+(e.hours||0), 0);
+      const pills = sessions.slice(0,3).map(s => {
+        const color = Cartografias.getAll()[s.subject]?.color || '#4F46E5';
+        const icon  = Cartografias.getAll()[s.subject]?.icon  || '📚';
+        return `<div class="sched-mc-pill${s.done?' done':''}" style="background:${color}20;border-left:3px solid ${color}"
+          onclick="App.schedEdit('${s.id}');event.stopPropagation()">${icon} ${escHtml(s.subject.substring(0,6))} ${s.hours}h</div>`;
+      }).join('');
+      const more = sessions.length>3 ? `<div class="sched-mc-more">+${sessions.length-3} mais</div>` : '';
+      return `
+        <div class="sched-month-cell${isToday?' sched-mc-today':''}${isPast?' sched-mc-past':''}" onclick="App.schedAddModal('${dateStr}')">
+          <div class="sched-mc-num">${day}${totalH>0?` <span class="sched-mc-hrs">${totalH}h</span>`:''}</div>
+          ${pills}${more}
+        </div>`;
+    }).join('');
+    return `
+      <div class="sched-nav">
+        <button class="btn btn-ghost btn-sm" onclick="App.schedNavigateMonth(-1)">‹ Anterior</button>
+        <span class="sched-nav-lbl">${title}</span>
+        <button class="btn btn-ghost btn-sm" onclick="App.schedNavigateMonth(1)">Próximo ›</button>
+      </div>
+      <div class="sched-month-grid">${hdrs}${empty}${cells}</div>`;
+  }
+
+  function _schedSessionCard(s, mode) {
+    const cd    = Cartografias.getAll();
+    const color = cd[s.subject]?.color || '#4F46E5';
+    const icon  = cd[s.subject]?.icon  || '📚';
+    const tops  = s.topics?.length
+      ? s.topics.slice(0,2).join(', ')+(s.topics.length>2?` +${s.topics.length-2}`:'')
+      : '';
+    if (mode === 'compact') return `
+      <div class="sched-session-compact${s.done?' done':''}" style="border-left-color:${color}">
+        <div class="sched-sc-top">
+          <span class="sched-sc-subj" style="color:${color}">${escHtml(s.subject)}</span>
+          <span class="sched-sc-hrs">${s.hours}h</span>
+        </div>
+        ${tops?`<div class="sched-sc-topics">${escHtml(tops)}</div>`:''}
+        <div class="sched-sc-btns">
+          <button class="sched-done-btn${s.done?' done':''}" onclick="App.schedToggleDone('${s.id}');event.stopPropagation()" title="${s.done?'Desfazer':'Concluir'}">${s.done?'✓':'○'}</button>
+          <button class="sched-btn-sm" onclick="App.schedEdit('${s.id}');event.stopPropagation()">✎</button>
+          <button class="sched-btn-sm danger" onclick="App.schedDelete('${s.id}');event.stopPropagation()">✕</button>
+        </div>
+      </div>`;
+    return `
+      <div class="sched-session-full${s.done?' done':''}" style="border-left-color:${color}">
+        <div class="sched-sf-row">
+          <button class="sched-done-btn lg${s.done?' done':''}" onclick="App.schedToggleDone('${s.id}')">${s.done?'✅':'○'}</button>
+          <div class="sched-sf-body">
+            <div class="sched-sf-top">
+              <span>${icon}</span>
+              <span class="sched-sf-subj" style="color:${color}">${escHtml(s.subject)}</span>
+              <span class="sched-hours-badge">${s.hours}h</span>
+            </div>
+            ${s.topics?.length?`<div class="sched-sf-topics">${escHtml(s.topics.join(' · '))}</div>`:''}
+            ${s.notes?`<div class="sched-sf-notes">${escHtml(s.notes)}</div>`:''}
+          </div>
+          <div class="sched-sf-btns">
+            <button class="gestao-btn gestao-btn-edit" onclick="App.schedEdit('${s.id}')">✎</button>
+            <button class="gestao-btn gestao-btn-del"  onclick="App.schedDelete('${s.id}')">✕</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function _schedTopicsHtml(subject, selected) {
+    const data = Cartografias.getAll()[subject];
+    if (!data) return '<p style="font-size:13px;color:var(--text-muted)">Sem tópicos para esta matéria.</p>';
+    return Object.entries(data.anos).map(([ano, topics]) => `
+      <div class="sf-topic-section">
+        <div class="sf-topic-ano">${escHtml(ano)}</div>
+        <div class="sf-topic-list">
+          ${topics.map(t=>`<label class="sf-topic-chk"><input type="checkbox" value="${escHtml(t)}"${selected.includes(t)?' checked':''}> ${escHtml(t)}</label>`).join('')}
+        </div>
+      </div>`).join('');
+  }
+
+  function schedLoadTopics() {
+    const subj = document.getElementById('sf-subject')?.value;
+    const wrap = document.getElementById('sf-topics-wrap');
+    if (!wrap) return;
+    wrap.innerHTML = subj
+      ? _schedTopicsHtml(subj, [])
+      : '<p style="font-size:13px;color:var(--text-muted)">Selecione uma matéria para ver os tópicos.</p>';
+  }
+
+  function _schedForm(entry) {
+    const subjects = Storage.getSubjects();
+    const subjOpts = `<option value="">— Selecione —</option>`
+      + subjects.map(s=>`<option value="${escHtml(s)}"${entry?.subject===s?' selected':''}>${escHtml(s)}</option>`).join('');
+    const topicsHtml = entry?.subject
+      ? _schedTopicsHtml(entry.subject, entry.topics||[])
+      : '<p style="font-size:13px;color:var(--text-muted)">Selecione uma matéria para ver os tópicos.</p>';
+    return `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div class="form-group">
+          <label class="form-label">Data *</label>
+          <input type="date" class="form-control" id="sf-date" value="${entry?.date||new Date().toISOString().slice(0,10)}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Horas de Estudo *</label>
+          <input type="number" class="form-control" id="sf-hours" min="0.5" max="12" step="0.5" value="${entry?.hours||1.5}">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Matéria *</label>
+        <select class="form-control" id="sf-subject" onchange="App.schedLoadTopics()">${subjOpts}</select>
+      </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Tópicos <span style="font-size:11px;font-weight:400;color:var(--text-muted)">(opcional — pode selecionar vários)</span></label>
+        <div id="sf-topics-wrap" class="sf-topics-wrap">${topicsHtml}</div>
+      </div>
+      <div class="form-group" style="margin-bottom:18px">
+        <label class="form-label">Observações</label>
+        <textarea class="form-control" id="sf-notes" rows="2" placeholder="Objetivo da sessão, material a usar…">${escHtml(entry?.notes||'')}</textarea>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="App.closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="App.schedSave()">💾 Salvar</button>
+      </div>`;
+  }
+
+  function schedAddModal(date) {
+    _editingSchedId = null;
+    openModal('+ Nova Sessão de Estudo', _schedForm(date ? { date } : null));
+  }
+
+  function schedEdit(id) {
+    const entry = Storage.getSchedule().find(e => e.id===id);
+    if (!entry) return;
+    _editingSchedId = id;
+    openModal('✎ Editar Sessão', _schedForm(entry));
+  }
+
+  function schedDelete(id) {
+    if (!confirm('Excluir esta sessão de estudo?')) return;
+    Storage.deleteScheduleEntry(id);
+    renderCronogramaEstudos();
+    toast('Sessão excluída.', 'success');
+  }
+
+  function schedToggleDone(id) {
+    const entry = Storage.getSchedule().find(e => e.id===id);
+    if (!entry) return;
+    Storage.updateScheduleEntry(id, { done: !entry.done });
+    renderCronogramaEstudos();
+  }
+
+  function schedSave() {
+    const date    = document.getElementById('sf-date')?.value;
+    const subject = document.getElementById('sf-subject')?.value;
+    const hours   = parseFloat(document.getElementById('sf-hours')?.value);
+    const notes   = document.getElementById('sf-notes')?.value.trim()||'';
+    if (!date)             { toast('Informe a data.',          'error'); return; }
+    if (!subject)          { toast('Selecione uma matéria.',   'error'); return; }
+    if (!hours||hours<=0)  { toast('Informe as horas.',        'error'); return; }
+    const topics = Array.from(document.querySelectorAll('#sf-topics-wrap input[type="checkbox"]:checked')).map(c=>c.value);
+    const payload = { date, subject, topics, hours, notes };
+    if (_editingSchedId) {
+      Storage.updateScheduleEntry(_editingSchedId, payload);
+      toast('Sessão atualizada!', 'success');
+    } else {
+      Storage.addScheduleEntry({ ...payload, done: false });
+      toast('Sessão adicionada!', 'success');
+    }
+    _editingSchedId = null;
+    closeModal();
+    renderCronogramaEstudos();
+  }
+
   /* ── Metas ── */
   function renderMetas() {
     const el       = document.getElementById('metas-content');
@@ -1448,7 +1740,9 @@ const App = (() => {
     vestibularNew, vestibularEdit, vestibularDelete, vestibularSave,
     vestibularToggleInscricao,
     vestibularAddDate, vestibularRemoveDate,
-    updateSimRow, updateErrRow
+    updateSimRow, updateErrRow,
+    schedSetView, schedNavigate, schedNavigateMonth,
+    schedAddModal, schedEdit, schedDelete, schedToggleDone, schedSave, schedLoadTopics
   };
 })();
 

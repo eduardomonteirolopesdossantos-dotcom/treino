@@ -236,7 +236,7 @@ const App = (() => {
       { val: 'done',     label: '● Estudado'   },
     ].map(s => `<button class="filter-btn ${s.val===''?'active':''}" data-type="status" data-val="${s.val}" onclick="App.setCartoFilter('status','${s.val}')">${escHtml(s.label)}</button>`).join('');
 
-    const periodoBtns = [{ val: '', label: 'Todos' }, ...Cartografias.PERIODO_OPTIONS.map(p => ({ val: p, label: p }))]
+    const periodoBtns = [{ val: '', label: 'Todos' }, ...Cartografias.PERIODO_OPTIONS.map(p => ({ val: p, label: p })), { val: '3+4', label: '3 + 4' }]
       .map(s => `<button class="filter-btn ${s.val===''?'active':''} periodo-btn" data-type="periodo" data-val="${escHtml(s.val)}" onclick="App.setCartoFilter('periodo',${JSON.stringify(s.val)})">${escHtml(s.label)}</button>`).join('');
 
     openModal(`${d.icon} ${escHtml(subj)}`, `
@@ -299,7 +299,11 @@ const App = (() => {
           if (fgv     && rel.FGV    !== fgv)    return false;
           if (enem    && rel.ENEM   !== enem)   return false;
           if (status  && Cartografias.getStatus(subj, ano, topic) !== status) return false;
-          if (periodo && Cartografias.getPeriodo(subj, ano, topic) !== periodo) return false;
+          if (periodo) {
+            const tp = Cartografias.getPeriodo(subj, ano, topic);
+            if (periodo === '3+4') { if (tp !== '3.Preparatório' && tp !== '4.Material Disponível') return false; }
+            else if (tp !== periodo) return false;
+          }
           return true;
         });
         if (!visibleTopics.length) return '';

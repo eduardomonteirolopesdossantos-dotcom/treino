@@ -1,5 +1,5 @@
 const Storage = (() => {
-  const KEY = 'vestibular_bia_v1';
+  const KEY = 'vestibular_gui_v1';
 
   const SUBJECTS = [
     'Matemática', 'Física', 'Química', 'Biologia',

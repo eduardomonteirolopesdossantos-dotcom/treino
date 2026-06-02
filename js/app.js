@@ -60,7 +60,7 @@ const App = (() => {
         <div class="empty-state">
           <div class="empty-state-icon">📊</div>
           <h3>Nenhum simulado registrado ainda</h3>
-          <p>Comece adicionando o resultado do primeiro simulado de Bia.</p>
+          <p>Comece adicionando o resultado do primeiro simulado de Gui.</p>
           <button class="btn btn-primary" onclick="App.navigate('novo-simulado')">+ Adicionar Primeiro Simulado</button>
           <br><br>
           <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="Storage.loadSampleData();App.renderPage('dashboard')">Ver com dados de exemplo (S1–S3)</button>

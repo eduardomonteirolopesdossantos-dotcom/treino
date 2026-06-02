@@ -1,5 +1,5 @@
 const Cartografias = (() => {
-  const KEY = 'vestibular_bia_topics_v1';
+  const KEY = 'vestibular_gui_topics_v1';
 
   const DATA = {
     'Biologia': {
@@ -233,7 +233,7 @@ const Cartografias = (() => {
   };
 
   // Persisted topic-level overrides (user-editable via Editar Mapa)
-  const RELEVANCE_KEY = 'vestibular_bia_relevance_v1';
+  const RELEVANCE_KEY = 'vestibular_gui_relevance_v1';
   let _liveRelevance = (() => {
     try {
       const s = localStorage.getItem(RELEVANCE_KEY);
@@ -274,7 +274,7 @@ const Cartografias = (() => {
   }
 
   // ── Persisted cartografia data (allows adding / editing / deleting topics) ──
-  const DATA_KEY = 'vestibular_bia_carto_data_v1';
+  const DATA_KEY = 'vestibular_gui_carto_data_v1';
   let _liveData = (() => {
     try {
       const s = localStorage.getItem(DATA_KEY);
@@ -371,7 +371,7 @@ const Cartografias = (() => {
   }
 
   // ── Vestibulares CRUD ────────────────────────────────────────────────────
-  const VEST_KEY = 'vestibular_bia_vestibulares_v1';
+  const VEST_KEY = 'vestibular_gui_vestibulares_v1';
   let _liveVestibulares = (() => {
     try { const s = localStorage.getItem(VEST_KEY); if (s) return JSON.parse(s); }
     catch(e) {}

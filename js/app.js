@@ -77,25 +77,7 @@ const App = (() => {
       ? `<span class="${stats.trend >= 0 ? 'trend-up' : 'trend-down'}">${stats.trend >= 0 ? '▲' : '▼'} ${Math.abs(stats.trend).toFixed(1)}% no último simulado</span>`
       : '<span style="color:var(--text-muted)">Primeiro simulado</span>';
 
-    // School calendar banner
-    const today = new Date(); today.setHours(0,0,0,0);
-    const cal = Storage.getSchoolCalendar();
-    const nextSim = cal.find(s => new Date(s.date + 'T00:00:00') > today);
-    const calBanner = nextSim ? (() => {
-      const d = new Date(nextSim.date + 'T00:00:00');
-      const days = Math.round((d - today) / 86400000);
-      return `<div class="school-cal"><h4>📅 Próximo simulado da Escola Mobile</h4>
-        <div style="display:flex;align-items:center;gap:12px">
-          <div style="font-size:20px;font-weight:700;color:#6D28D9">${nextSim.code}</div>
-          <div>
-            <div style="font-size:14px;font-weight:600">${nextSim.name}</div>
-            <div style="font-size:12px;color:#7C3AED">${new Date(nextSim.date + 'T00:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'long'})} · <strong>${days} dias</strong></div>
-          </div>
-        </div></div>`;
-    })() : '';
-
     el.innerHTML = `
-      ${calBanner}
       <div class="grid-4">
         <div class="stat-card">
           <div class="stat-icon">📝</div>

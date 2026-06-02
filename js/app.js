@@ -1,7 +1,7 @@
 const App = (() => {
   let editingId = null;
   let _cartoSubj = '';
-  let _cartoFilters = { year: '', fuvest: '', vunesp: '', fgv: '', enem: '', status: '' };
+  let _cartoFilters = { year: '', fuvest: '', vunesp: '', fgv: '', enem: '', status: '', periodo: '' };
   let _editingVestIdx = null;
   let _schedView    = 'semana';
   let _schedRefDate = new Date();
@@ -197,7 +197,7 @@ const App = (() => {
     const d = data[subj]; if (!d) return;
 
     _cartoSubj = subj;
-    _cartoFilters = { year: '', fuvest: '', vunesp: '', fgv: '', enem: '', status: '' };
+    _cartoFilters = { year: '', fuvest: '', vunesp: '', fgv: '', enem: '', status: '', periodo: '' };
 
     const anos = Object.keys(d.anos);
 
@@ -236,6 +236,9 @@ const App = (() => {
       { val: 'done',     label: '● Estudado'   },
     ].map(s => `<button class="filter-btn ${s.val===''?'active':''}" data-type="status" data-val="${s.val}" onclick="App.setCartoFilter('status','${s.val}')">${escHtml(s.label)}</button>`).join('');
 
+    const periodoBtns = [{ val: '', label: 'Todos' }, ...Cartografias.PERIODO_OPTIONS.map(p => ({ val: p, label: p }))]
+      .map(s => `<button class="filter-btn ${s.val===''?'active':''} periodo-btn" data-type="periodo" data-val="${escHtml(s.val)}" onclick="App.setCartoFilter('periodo',${JSON.stringify(s.val)})">${escHtml(s.label)}</button>`).join('');
+
     openModal(`${d.icon} ${escHtml(subj)}`, `
       <div class="carto-legend" style="padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:14px">
         <span><span style="color:#9CA3AF">○</span> Pendente</span>
@@ -268,6 +271,10 @@ const App = (() => {
           <span class="filter-label">Revisão</span>
           <div class="filter-btns">${statusBtns}</div>
         </div>
+        <div class="filter-group">
+          <span class="filter-label" style="color:#0F766E">Período</span>
+          <div class="filter-btns">${periodoBtns}</div>
+        </div>
       </div>
       <div id="carto-topics"></div>`);
 
@@ -276,7 +283,7 @@ const App = (() => {
 
   function _renderCartoTopics() {
     const subj = _cartoSubj;
-    const { year, fuvest, vunesp, fgv, enem, status } = _cartoFilters;
+    const { year, fuvest, vunesp, fgv, enem, status, periodo } = _cartoFilters;
     const d = Cartografias.getAll()[subj]; if (!d) return;
     const SC = { pending: '#D1D5DB', studying: '#F59E0B', done: '#10B981' };
     const SL = { pending: '○', studying: '◑', done: '●' };
@@ -287,11 +294,12 @@ const App = (() => {
         // Filter each topic individually by its own vestibular classification
         const visibleTopics = allTopics.filter(topic => {
           const rel = Cartografias.getTopicRelevance(subj, ano, topic);
-          if (fuvest && rel.FUVEST !== fuvest) return false;
-          if (vunesp && rel.VUNESP !== vunesp) return false;
-          if (fgv    && rel.FGV    !== fgv)    return false;
-          if (enem   && rel.ENEM   !== enem)   return false;
-          if (status && Cartografias.getStatus(subj, ano, topic) !== status) return false;
+          if (fuvest  && rel.FUVEST !== fuvest) return false;
+          if (vunesp  && rel.VUNESP !== vunesp) return false;
+          if (fgv     && rel.FGV    !== fgv)    return false;
+          if (enem    && rel.ENEM   !== enem)   return false;
+          if (status  && Cartografias.getStatus(subj, ano, topic) !== status) return false;
+          if (periodo && Cartografias.getPeriodo(subj, ano, topic) !== periodo) return false;
           return true;
         });
         if (!visibleTopics.length) return '';
@@ -311,6 +319,8 @@ const App = (() => {
           if (vunesp && rel.VUNESP) badges += `<span class="rel-badge rel-vunesp">${rel.VUNESP}</span>`;
           if (fgv    && rel.FGV)    badges += `<span class="rel-badge rel-fgv">${rel.FGV}</span>`;
           if (enem   && rel.ENEM)   badges += `<span class="rel-badge rel-enem">${rel.ENEM}</span>`;
+          const per = Cartografias.getPeriodo(subj, ano, topic);
+          if (per) badges += `<span class="rel-badge rel-periodo">${escHtml(per)}</span>`;
           return `<div class="topic-item" style="border-left-color:${SC[st]}"
                onclick="App.toggleTopic(this,'${safeSubj}','${safeAno}','${safeTopic}')">
             <span class="topic-status" style="color:${SC[st]}">${SL[st]}</span>
@@ -1727,7 +1737,9 @@ const App = (() => {
     const sa = escHtml(ano).replace(/'/g,"&#39;");
     const st = escHtml(topic).replace(/'/g,"&#39;");
     const badge = (v, cls) => v ? `<span class="gestao-rel-mini rel-${cls}">${v}</span>` : '';
-    const badges = badge(rel.FUVEST,'fuvest') + badge(rel.VUNESP,'vunesp') + badge(rel.FGV,'fgv') + badge(rel.ENEM,'enem');
+    const per = Cartografias.getPeriodo(disc, ano, topic);
+    const badges = badge(rel.FUVEST,'fuvest') + badge(rel.VUNESP,'vunesp') + badge(rel.FGV,'fgv') + badge(rel.ENEM,'enem')
+      + (per ? `<span class="gestao-rel-mini rel-periodo gestao-rel-wide">${escHtml(per)}</span>` : '');
     const canUp   = idx > 0;
     const canDown = idx < total - 1;
     const upBtn   = canUp
@@ -1753,7 +1765,8 @@ const App = (() => {
   }
 
   function gestaoStartEdit(btn, disc, ano, topic) {
-    const rel = Cartografias.getTopicRelevance(disc, ano, topic);
+    const rel    = Cartografias.getTopicRelevance(disc, ano, topic);
+    const curPer = Cartografias.getPeriodo(disc, ano, topic);
     const row = btn.closest('.gestao-topic-row');
     const sd = escHtml(disc).replace(/'/g,"&#39;");
     const sa = escHtml(ano).replace(/'/g,"&#39;");
@@ -1792,6 +1805,10 @@ const App = (() => {
             <span class="gestao-rel-label-sm" style="color:#16A34A">ENEM</span>
             ${sel('gsel-enem',[['H','H — Frequente'],['I','I — Muito freq.']], rel.ENEM)}
           </span>
+          <span class="gestao-rel-group">
+            <span class="gestao-rel-label-sm" style="color:#0F766E">Período</span>
+            ${sel('gsel-periodo', Cartografias.PERIODO_OPTIONS.map(p => [p, p]), curPer)}
+          </span>
         </div>
       </div>`;
     row.querySelector('input').focus();
@@ -1807,11 +1824,13 @@ const App = (() => {
       FGV:    row.querySelector('.gsel-fgv')?.value    || null,
       ENEM:   row.querySelector('.gsel-enem')?.value   || null,
     };
+    const periodo = row.querySelector('.gsel-periodo')?.value || null;
     // Rename if name changed
     if (newName !== oldTopic && !Cartografias.renameTopic(disc, ano, oldTopic, newName)) {
       toast('Tópico já existe ou nome inválido.', 'error'); return;
     }
     Cartografias.setTopicRelevance(disc, ano, newName, rel);
+    Cartografias.setPeriodo(disc, ano, newName, periodo);
     renderGestaoCarto();
     toast('Tópico atualizado.', 'success');
   }

@@ -232,6 +232,26 @@ const Cartografias = (() => {
     },
   };
 
+  // ── Período da revisão por tópico ─────────────────────────────────────────
+  const PERIODO_OPTIONS = ['1.1','1.2','1.3','1.4','1.5','2.Pós PR6','3.Preparatório','4.Material Disponível'];
+  const PERIODO_KEY = 'vestibular_bia_periodo_v1';
+  let _livePeriodo = (() => {
+    try { const s = localStorage.getItem(PERIODO_KEY); if (s) return JSON.parse(s); } catch(e) {}
+    return {};
+  })();
+  function _persistPeriodo() { localStorage.setItem(PERIODO_KEY, JSON.stringify(_livePeriodo)); }
+
+  function getPeriodo(disc, ano, topic) {
+    return _livePeriodo[disc]?.[ano]?.[topic] || null;
+  }
+  function setPeriodo(disc, ano, topic, val) {
+    if (!_livePeriodo[disc])       _livePeriodo[disc] = {};
+    if (!_livePeriodo[disc][ano])  _livePeriodo[disc][ano] = {};
+    if (val) { _livePeriodo[disc][ano][topic] = val; }
+    else      { delete _livePeriodo[disc][ano][topic]; }
+    _persistPeriodo();
+  }
+
   // Persisted topic-level overrides (user-editable via Editar Mapa)
   const RELEVANCE_KEY = 'vestibular_bia_relevance_v1';
   let _liveRelevance = (() => {
@@ -317,6 +337,7 @@ const Cartografias = (() => {
     const prog = _loadProgress();
     delete prog[_key(disc, ano, name)];
     _saveProgress(prog);
+    if (_livePeriodo[disc]?.[ano]) { delete _livePeriodo[disc][ano][name]; _persistPeriodo(); }
     _persistData();
     return true;
   }
@@ -335,6 +356,15 @@ const Cartografias = (() => {
     _saveProgress(prog);
     _persistData();
     _migrateRelevance(disc, ano, oldName, newName);
+    // Migrate periodo
+    const curPer = _livePeriodo[disc]?.[ano]?.[oldName];
+    if (curPer !== undefined) {
+      if (!_livePeriodo[disc])       _livePeriodo[disc] = {};
+      if (!_livePeriodo[disc][ano])  _livePeriodo[disc][ano] = {};
+      _livePeriodo[disc][ano][newName] = curPer;
+      delete _livePeriodo[disc][ano][oldName];
+      _persistPeriodo();
+    }
     return true;
   }
 
@@ -399,5 +429,5 @@ const Cartografias = (() => {
   function getAll()          { return _liveData; }
   function getVestibulares() { return _liveVestibulares; }
 
-  return { getAll, getVestibulares, addVestibular, updateVestibular, deleteVestibular, getStatus, setStatus, toggleStatus, getSubjectProgress, getRelevance, getTopicRelevance, setTopicRelevance, addTopic, deleteTopic, renameTopic, moveTopic };
+  return { getAll, getVestibulares, addVestibular, updateVestibular, deleteVestibular, getStatus, setStatus, toggleStatus, getSubjectProgress, getRelevance, getTopicRelevance, setTopicRelevance, getPeriodo, setPeriodo, PERIODO_OPTIONS, addTopic, deleteTopic, renameTopic, moveTopic };
 })();

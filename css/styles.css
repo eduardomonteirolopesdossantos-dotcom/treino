@@ -65,8 +65,10 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
 .nav-item.active { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(79,70,229,.4); }
 .nav-icon { font-size: 17px; min-width: 22px; text-align: center; }
 
-.sidebar-footer { padding: 14px 20px; border-top: 1px solid rgba(255,255,255,.1); }
+.sidebar-footer { padding: 14px 20px; border-top: 1px solid rgba(255,255,255,.1); display:flex; align-items:center; justify-content:space-between; }
 .version { font-size: 11px; color: #6366F1; }
+#sync-indicator { opacity:.7; transition:opacity .2s; }
+#sync-indicator:hover { opacity:1; }
 
 /* ── Main ── */
 .main {

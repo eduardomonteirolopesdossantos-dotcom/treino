@@ -1926,4 +1926,8 @@ const App = (() => {
   };
 })();
 
-document.addEventListener('DOMContentLoaded', () => App.init());
+document.addEventListener('DOMContentLoaded', async () => {
+  // Pull cloud data first — if cloud is newer it updates localStorage before App renders
+  await CloudSync.pull();
+  App.init();
+});

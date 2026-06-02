@@ -120,6 +120,29 @@ const Storage = (() => {
 
   function getSchoolCalendar() { return SCHOOL_CALENDAR; }
 
+  // Study schedule
+  const SCHEDULE_KEY = 'vestibular_gui_schedule_v1';
+  function getSchedule() {
+    try { return JSON.parse(localStorage.getItem(SCHEDULE_KEY)) || []; }
+    catch { return []; }
+  }
+  function addScheduleEntry(e) {
+    const l = getSchedule();
+    e.id = Date.now().toString();
+    e.createdAt = new Date().toISOString();
+    l.push(e);
+    localStorage.setItem(SCHEDULE_KEY, JSON.stringify(l));
+    return e;
+  }
+  function updateScheduleEntry(id, u) {
+    const l = getSchedule();
+    const i = l.findIndex(e => e.id === id);
+    if (i !== -1) { l[i] = { ...l[i], ...u }; localStorage.setItem(SCHEDULE_KEY, JSON.stringify(l)); }
+  }
+  function deleteScheduleEntry(id) {
+    localStorage.setItem(SCHEDULE_KEY, JSON.stringify(getSchedule().filter(e => e.id !== id)));
+  }
+
   function loadSampleData() {
     const d = _default();
     // S1, S2 already past — load as completed simulados
@@ -156,6 +179,7 @@ const Storage = (() => {
     getSubjects, getGoals, saveGoals,
     getSimulados, addSimulado, updateSimulado, deleteSimulado, getSimuladoById,
     getEvents, addEvent, deleteEvent,
-    getStats, loadSampleData, getSchoolCalendar
+    getStats, loadSampleData, getSchoolCalendar,
+    getSchedule, addScheduleEntry, updateScheduleEntry, deleteScheduleEntry
   };
 })();

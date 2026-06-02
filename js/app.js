@@ -918,14 +918,17 @@ const App = (() => {
         <div class="vest-rows">
           <div class="vest-row"><span class="vest-row-label">Formato</span><span class="vest-row-val">${escHtml(v.formato)}</span></div>
           <div class="vest-row"><span class="vest-row-label">Datas</span><span class="vest-row-val vest-datas-val">${_fmtDatas(v.datas)}</span></div>
+          <div class="vest-row">
+            <span class="vest-row-label">Inscrição</span>
+            <button class="vest-inscricao-btn ${v.inscricao ? 'inscricao-sim' : 'inscricao-nao'}"
+              onclick="App.vestibularToggleInscricao(${idx})">
+              ${v.inscricao ? '✅ Sim' : '❌ Não'}
+            </button>
+          </div>
         </div>
       </div>`).join('');
 
     el.innerHTML = `
-      <div class="card" style="margin-bottom:22px;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border:none">
-        <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#fff">📌 Dica da Escola Mobile</h3>
-        <p style="font-size:14px;opacity:.9">Pesquise o edital de cada vestibular que Bia pretende fazer. Os editais do ENEM e FUVEST saem em <strong>julho/agosto</strong>. Verifique datas, formatos e leituras obrigatórias com a Coordenação.</p>
-      </div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
         <button class="btn btn-primary" onclick="App.vestibularNew()">+ Novo Vestibular</button>
       </div>
@@ -988,6 +991,13 @@ const App = (() => {
       ${field('descricao', 'Descrição', 'text',     v?.descricao, 'Ex: Universidade de São Paulo (USP)')}
       ${field('formato',   'Formato',   'textarea', v?.formato,   'Ex: 2 fases: 1ª Múltipla escolha + 2ª Dissertativa')}
       <div class="form-group">
+        <label class="form-label">Inscrição Feita</label>
+        <select class="form-control" id="vf-inscricao">
+          <option value="nao"${!v?.inscricao ? ' selected' : ''}>❌ Não</option>
+          <option value="sim"${v?.inscricao  ? ' selected' : ''}>✅ Sim</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label class="form-label">Datas <span style="font-size:11px;font-weight:400;color:var(--text-muted)">(1 a 4)</span></label>
         <div class="vest-dates-list" id="vf-dates-list">${dateRows}</div>
         <button type="button" class="btn btn-ghost btn-sm" id="vf-add-date" onclick="App.vestibularAddDate()"${hideAdd ? ' style="display:none"' : ''}>+ Adicionar data</button>
@@ -1046,6 +1056,13 @@ const App = (() => {
     toast(`"${v.nome}" removido.`, 'success');
   }
 
+  function vestibularToggleInscricao(idx) {
+    const v = Cartografias.getVestibulares()[idx];
+    if (!v) return;
+    Cartografias.updateVestibular(idx, { ...v, inscricao: !v.inscricao });
+    renderVestibulares();
+  }
+
   function vestibularSave() {
     const nome = document.getElementById('vf-nome')?.value.trim();
     if (!nome) { toast('O nome é obrigatório.', 'error'); return; }
@@ -1062,6 +1079,7 @@ const App = (() => {
       cor:       document.getElementById('vf-cor')?.value              || '#4F46E5',
       descricao: document.getElementById('vf-descricao')?.value.trim() || '',
       formato:   document.getElementById('vf-formato')?.value.trim()   || '',
+      inscricao: document.getElementById('vf-inscricao')?.value === 'sim',
       datas,
     };
     if (_editingVestIdx !== null) {
@@ -1428,6 +1446,7 @@ const App = (() => {
     gestaoMoveUp, gestaoMoveDown,
     gestaoShowAdd, gestaoConfirmAdd,
     vestibularNew, vestibularEdit, vestibularDelete, vestibularSave,
+    vestibularToggleInscricao,
     vestibularAddDate, vestibularRemoveDate,
     updateSimRow, updateErrRow
   };

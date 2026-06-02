@@ -540,9 +540,13 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
 .vest-nome { font-size: 16px; font-weight: 700; }
 .vest-desc { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
 .vest-rows { display: flex; flex-direction: column; gap: 8px; }
-.vest-row { display: flex; gap: 8px; font-size: 13px; }
+.vest-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .vest-row-label { font-weight: 600; color: var(--text-light); min-width: 72px; flex-shrink: 0; }
 .vest-row-val { color: var(--text); }
+.vest-inscricao-btn { border: none; border-radius: 6px; padding: 4px 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity var(--t); line-height: 1.6; }
+.vest-inscricao-btn:hover { opacity: .8; }
+.inscricao-sim { background: #D1FAE5; color: #065F46; }
+.inscricao-nao { background: #FEE2E2; color: #991B1B; }
 
 /* Simulado calendar from school */
 .school-cal { background: #EDE9FE; border-radius: var(--radius); padding: 16px 20px; margin-bottom: 22px; border: 1px solid #C4B5FD; }

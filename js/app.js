@@ -237,7 +237,7 @@ const App = (() => {
     ].map(s => `<button class="filter-btn ${s.val===''?'active':''}" data-type="status" data-val="${s.val}" onclick="App.setCartoFilter('status','${s.val}')">${escHtml(s.label)}</button>`).join('');
 
     const periodoBtns = [{ val: '', label: 'Todos' }, ...Cartografias.PERIODO_OPTIONS.map(p => ({ val: p, label: p }))]
-      .map(s => `<button class="filter-btn ${s.val===''?'active':''} periodo-btn" data-type="periodo" data-val="${escHtml(s.val)}" onclick="App.setCartoFilter('periodo',${JSON.stringify(s.val)})">${escHtml(s.label)}</button>`).join('');
+      .map(s => `<button class="filter-btn ${s.val===''?'active':''} periodo-btn" data-type="periodo" data-val="${escHtml(s.val)}" onclick="App.setCartoFilter('periodo','${escHtml(s.val).replace(/'/g,'&#39;')}')">${escHtml(s.label)}</button>`).join('');
 
     openModal(`${d.icon} ${escHtml(subj)}`, `
       <div class="carto-legend" style="padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:14px">

@@ -1,7 +1,7 @@
 const App = (() => {
   let editingId = null;
   let _cartoSubj = '';
-  let _cartoFilters = { year: '', fuvest: '', vunesp: '', fgv: '', enem: '', status: '', periodo: '' };
+  let _cartoFilters = { year: '', fuvest: '', vunesp: '', fgv: '', enem: '', status: '', periodo: [] };
   let _editingVestIdx = null;
   let _schedView    = 'semana';
   let _schedRefDate = new Date();
@@ -197,7 +197,7 @@ const App = (() => {
     const d = data[subj]; if (!d) return;
 
     _cartoSubj = subj;
-    _cartoFilters = { year: '', fuvest: '', vunesp: '', fgv: '', enem: '', status: '', periodo: '' };
+    _cartoFilters = { year: '', fuvest: '', vunesp: '', fgv: '', enem: '', status: '', periodo: [] };
 
     const anos = Object.keys(d.anos);
 
@@ -299,7 +299,7 @@ const App = (() => {
           if (fgv     && rel.FGV    !== fgv)    return false;
           if (enem    && rel.ENEM   !== enem)   return false;
           if (status  && Cartografias.getStatus(subj, ano, topic) !== status) return false;
-          if (periodo && Cartografias.getPeriodo(subj, ano, topic) !== periodo) return false;
+          if (periodo.length && !periodo.includes(Cartografias.getPeriodo(subj, ano, topic))) return false;
           return true;
         });
         if (!visibleTopics.length) return '';
@@ -345,6 +345,23 @@ const App = (() => {
   }
 
   function setCartoFilter(type, val) {
+    if (type === 'periodo') {
+      if (val === '') {
+        // "Todos" — limpa seleção
+        _cartoFilters.periodo = [];
+      } else {
+        const arr = _cartoFilters.periodo;
+        const idx = arr.indexOf(val);
+        if (idx === -1) arr.push(val); else arr.splice(idx, 1);
+      }
+      const isEmpty = _cartoFilters.periodo.length === 0;
+      document.querySelectorAll('#carto-filter-bar .filter-btn[data-type="periodo"]').forEach(btn => {
+        btn.classList.toggle('active',
+          btn.dataset.val === '' ? isEmpty : _cartoFilters.periodo.includes(btn.dataset.val));
+      });
+      _renderCartoTopics();
+      return;
+    }
     _cartoFilters[type] = val;
     document.querySelectorAll(`#carto-filter-bar .filter-btn[data-type="${type}"]`).forEach(btn => {
       btn.classList.toggle('active', btn.dataset.val === val);

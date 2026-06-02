@@ -12,5 +12,11 @@
   },
   "compatibility_flags": [
     "nodejs_compat"
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "VESTIBULAR_KV",
+      "id": "a7d11a26c6884aa39ad3d1dc5dfa9a3f"
+    }
   ]
 }

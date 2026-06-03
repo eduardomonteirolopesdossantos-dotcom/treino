@@ -1379,9 +1379,30 @@ const App = (() => {
   }
 
   function schedToggleDone(id) {
-    const entry = Storage.getSchedule().find(e => e.id===id);
+    const entry = Storage.getSchedule().find(e => e.id === id);
     if (!entry) return;
-    Storage.updateScheduleEntry(id, { done: !entry.done });
+    const newDone = !entry.done;
+    Storage.updateScheduleEntry(id, { done: newDone });
+
+    // Ao marcar como realizado → sincroniza tópicos na Cartografia
+    if (newDone && entry.topics?.length) {
+      const subjData = Cartografias.getAll()[entry.subject];
+      if (subjData) {
+        let count = 0;
+        entry.topics.forEach(topicName => {
+          for (const [ano, list] of Object.entries(subjData.anos)) {
+            if (list.includes(topicName)) {
+              Cartografias.setStatus(entry.subject, ano, topicName, 'done');
+              count++;
+              break;
+            }
+          }
+        });
+        if (count > 0)
+          toast(`✅ ${count} tópico${count > 1 ? 's marcados' : ' marcado'} como estudado${count > 1 ? 's' : ''} na Cartografia`, 'success');
+      }
+    }
+
     renderCronogramaEstudos();
   }
 

@@ -241,14 +241,18 @@ const Cartografias = (() => {
   })();
   function _persistPeriodo() { localStorage.setItem(PERIODO_KEY, JSON.stringify(_livePeriodo)); }
 
+  // getPeriodo sempre retorna um array (compat. com dados legados em string)
   function getPeriodo(disc, ano, topic) {
-    return _livePeriodo[disc]?.[ano]?.[topic] || null;
+    const v = _livePeriodo[disc]?.[ano]?.[topic];
+    if (!v) return [];
+    return Array.isArray(v) ? v : [v]; // compat. retroativa
   }
+  // val deve ser um array de strings (pode ser vazio)
   function setPeriodo(disc, ano, topic, val) {
     if (!_livePeriodo[disc])       _livePeriodo[disc] = {};
     if (!_livePeriodo[disc][ano])  _livePeriodo[disc][ano] = {};
-    if (val) { _livePeriodo[disc][ano][topic] = val; }
-    else      { delete _livePeriodo[disc][ano][topic]; }
+    if (val && val.length > 0) { _livePeriodo[disc][ano][topic] = val; }
+    else                        { delete _livePeriodo[disc][ano][topic]; }
     _persistPeriodo();
   }
 

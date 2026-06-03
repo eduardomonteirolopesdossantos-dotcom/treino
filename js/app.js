@@ -324,7 +324,10 @@ const App = (() => {
           if (fgv     && rel.FGV    !== fgv)    return false;
           if (enem    && rel.ENEM   !== enem)   return false;
           if (status  && Cartografias.getStatus(subj, ano, topic) !== status) return false;
-          if (periodo.length && !periodo.includes(Cartografias.getPeriodo(subj, ano, topic))) return false;
+          if (periodo.length) {
+            const pers = Cartografias.getPeriodo(subj, ano, topic);
+            if (!periodo.some(p => pers.includes(p))) return false;
+          }
           return true;
         });
         if (!visibleTopics.length) return '';
@@ -344,8 +347,9 @@ const App = (() => {
           if (vunesp && rel.VUNESP) badges += `<span class="rel-badge rel-vunesp">${rel.VUNESP}</span>`;
           if (fgv    && rel.FGV)    badges += `<span class="rel-badge rel-fgv">${rel.FGV}</span>`;
           if (enem   && rel.ENEM)   badges += `<span class="rel-badge rel-enem">${rel.ENEM}</span>`;
-          const per = Cartografias.getPeriodo(subj, ano, topic);
-          if (per) badges += `<span class="rel-badge rel-periodo">${escHtml(per)}</span>`;
+          Cartografias.getPeriodo(subj, ano, topic).forEach(p => {
+            badges += `<span class="rel-badge rel-periodo">${escHtml(p)}</span>`;
+          });
           return `<div class="topic-item" style="border-left-color:${SC[st]}"
                onclick="App.toggleTopic(this,'${safeSubj}','${safeAno}','${safeTopic}')">
             <span class="topic-status" style="color:${SC[st]}">${SL[st]}</span>
@@ -1762,9 +1766,9 @@ const App = (() => {
     const sa = escHtml(ano).replace(/'/g,"&#39;");
     const st = escHtml(topic).replace(/'/g,"&#39;");
     const badge = (v, cls) => v ? `<span class="gestao-rel-mini rel-${cls}">${v}</span>` : '';
-    const per = Cartografias.getPeriodo(disc, ano, topic);
+    const pers = Cartografias.getPeriodo(disc, ano, topic);
     const badges = badge(rel.FUVEST,'fuvest') + badge(rel.VUNESP,'vunesp') + badge(rel.FGV,'fgv') + badge(rel.ENEM,'enem')
-      + (per ? `<span class="gestao-rel-mini rel-periodo gestao-rel-wide">${escHtml(per)}</span>` : '');
+      + pers.map(p => `<span class="gestao-rel-mini rel-periodo gestao-rel-wide">${escHtml(p)}</span>`).join('');
     const canUp   = idx > 0;
     const canDown = idx < total - 1;
     const upBtn   = canUp
@@ -1830,9 +1834,16 @@ const App = (() => {
             <span class="gestao-rel-label-sm" style="color:#16A34A">ENEM</span>
             ${sel('gsel-enem',[['H','H — Frequente'],['I','I — Muito freq.']], rel.ENEM)}
           </span>
-          <span class="gestao-rel-group">
+          <span class="gestao-rel-group gestao-periodo-group-wrap">
             <span class="gestao-rel-label-sm" style="color:#0F766E">Período</span>
-            ${sel('gsel-periodo', Cartografias.PERIODO_OPTIONS.map(p => [p, p]), curPer)}
+            <div class="gestao-periodo-pills">
+              ${Cartografias.PERIODO_OPTIONS.map(p =>
+                `<label class="gestao-periodo-pill">
+                  <input type="checkbox" class="gchk-periodo" value="${escHtml(p)}" ${curPer.includes(p)?'checked':''}>
+                  <span>${escHtml(p)}</span>
+                </label>`
+              ).join('')}
+            </div>
           </span>
         </div>
       </div>`;
@@ -1849,13 +1860,13 @@ const App = (() => {
       FGV:    row.querySelector('.gsel-fgv')?.value    || null,
       ENEM:   row.querySelector('.gsel-enem')?.value   || null,
     };
-    const periodo = row.querySelector('.gsel-periodo')?.value || null;
+    const periodos = [...row.querySelectorAll('.gchk-periodo:checked')].map(cb => cb.value);
     // Rename if name changed
     if (newName !== oldTopic && !Cartografias.renameTopic(disc, ano, oldTopic, newName)) {
       toast('Tópico já existe ou nome inválido.', 'error'); return;
     }
     Cartografias.setTopicRelevance(disc, ano, newName, rel);
-    Cartografias.setPeriodo(disc, ano, newName, periodo);
+    Cartografias.setPeriodo(disc, ano, newName, periodos);
     renderGestaoCarto();
     toast('Tópico atualizado.', 'success');
   }

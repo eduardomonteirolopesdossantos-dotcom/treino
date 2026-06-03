@@ -236,8 +236,9 @@ const App = (() => {
       { val: 'done',     label: '● Estudado'   },
     ].map(s => `<button class="filter-btn ${s.val===''?'active':''}" data-type="status" data-val="${s.val}" onclick="App.setCartoFilter('status','${s.val}')">${escHtml(s.label)}</button>`).join('');
 
+    // Período — sem onclick inline para evitar problemas de escaping
     const periodoBtns = [{ val: '', label: 'Todos' }, ...Cartografias.PERIODO_OPTIONS.map(p => ({ val: p, label: p }))]
-      .map(s => `<button class="filter-btn ${s.val===''?'active':''} periodo-btn" data-type="periodo" data-val="${escHtml(s.val)}" onclick="App.setCartoFilter('periodo','${escHtml(s.val).replace(/'/g,'&#39;')}')">${escHtml(s.label)}</button>`).join('');
+      .map(s => `<button class="filter-btn ${s.val===''?'active':''} periodo-btn" data-periodo="${escHtml(s.val)}">${escHtml(s.label)}</button>`).join('');
 
     openModal(`${d.icon} ${escHtml(subj)}`, `
       <div class="carto-legend" style="padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:14px">
@@ -273,11 +274,35 @@ const App = (() => {
         </div>
         <div class="filter-group">
           <span class="filter-label" style="color:#0F766E">Período</span>
-          <div class="filter-btns">${periodoBtns}</div>
+          <div class="filter-btns" id="periodo-filter-btns">${periodoBtns}</div>
         </div>
       </div>
       <div id="carto-topics"></div>`);
 
+    // Período: addEventListener evita qualquer problema de escaping
+    document.getElementById('periodo-filter-btns').addEventListener('click', e => {
+      const btn = e.target.closest('[data-periodo]');
+      if (!btn) return;
+      const val = btn.dataset.periodo; // lê direto do DOM — sem encoding
+      _togglePeriodoFilter(val);
+    });
+
+    _renderCartoTopics();
+  }
+
+  function _togglePeriodoFilter(val) {
+    if (val === '') {
+      _cartoFilters.periodo = [];
+    } else {
+      const arr = _cartoFilters.periodo;
+      const idx = arr.indexOf(val);
+      if (idx === -1) arr.push(val); else arr.splice(idx, 1);
+    }
+    const isEmpty = _cartoFilters.periodo.length === 0;
+    document.querySelectorAll('#periodo-filter-btns [data-periodo]').forEach(btn => {
+      const bv = btn.dataset.periodo;
+      btn.classList.toggle('active', bv === '' ? isEmpty : _cartoFilters.periodo.includes(bv));
+    });
     _renderCartoTopics();
   }
 
@@ -345,23 +370,6 @@ const App = (() => {
   }
 
   function setCartoFilter(type, val) {
-    if (type === 'periodo') {
-      if (val === '') {
-        // "Todos" — limpa seleção
-        _cartoFilters.periodo = [];
-      } else {
-        const arr = _cartoFilters.periodo;
-        const idx = arr.indexOf(val);
-        if (idx === -1) arr.push(val); else arr.splice(idx, 1);
-      }
-      const isEmpty = _cartoFilters.periodo.length === 0;
-      document.querySelectorAll('#carto-filter-bar .filter-btn[data-type="periodo"]').forEach(btn => {
-        btn.classList.toggle('active',
-          btn.dataset.val === '' ? isEmpty : _cartoFilters.periodo.includes(btn.dataset.val));
-      });
-      _renderCartoTopics();
-      return;
-    }
     _cartoFilters[type] = val;
     document.querySelectorAll(`#carto-filter-bar .filter-btn[data-type="${type}"]`).forEach(btn => {
       btn.classList.toggle('active', btn.dataset.val === val);
